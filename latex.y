@@ -34,16 +34,16 @@ int yyerror(char *s);
 %right TK_LEFT
 %nonassoc MOINSU
 
-%start S
+%start Algos
 
 %%
 
-S:
-	S Commands
+Algos:
+	Algos Algo
 	| {printf("Done\n");}
 	;
 
-Commands:
+Algo:
 	Const Input Output Global Local Blankline Code
 	;
 
