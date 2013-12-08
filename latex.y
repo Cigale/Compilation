@@ -39,7 +39,7 @@ int yyerror(char *s);
 %%
 
 S:
-	Commands S
+	S Commands
 	| {printf("Done\n");}
 	;
 
@@ -78,7 +78,7 @@ Declarations:
 	;
 
 Declarations_List:
-	Parameter ',' Declarations_List
+	Declarations_List ',' Parameter
 	| Parameter
 	;
 
@@ -97,7 +97,7 @@ TableValue:
 	;
 
 Code:
-	Instruction Code
+	Code Instruction
 	|
 	;
 
