@@ -14,7 +14,7 @@ int yyerror(char *s);
 
 %union {
 	struct data {
-		struct scope* addr;
+		struct scope *sc;
 		quad* code;
 		quad* truelist;
 		quad* falselist;

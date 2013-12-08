@@ -10,14 +10,14 @@ quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 
 	quad *element = malloc(sizeof(quad));
 	if(!element) exit(-1);
-	
+
 	element->label = (char*) malloc(sizeof(char) * 10);
 	sprintf(element->label, "%d", next_quad);
 	element->operande1 = op1;
 	element->operande2 = op2;
 	element->res = res;
 	element->operateur = op;
-	
+
 	if(!t) {
 		t = element;
 		element->next = NULL;
@@ -27,12 +27,12 @@ quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 	}
 	t->last = element;
 	next_quad++;
-	
+
 	return t;
 }
 
 quad* quad_add(quad *t, quad* q) {
-	
+
 	if(!t) {
 		t = q;
 		q->next = NULL;
@@ -41,13 +41,13 @@ quad* quad_add(quad *t, quad* q) {
 		q->next = t;
 	}
 	t->last = q;
-	
+
 	return t;
 }
 
 quad* quad_concat(quad* q1, quad* q2) {
 	q1->last->next = q2;
-	
+
 	return q1;
 }
 
@@ -65,17 +65,17 @@ quad* quad_take(quad **p) {
 void quad_clear(quad **t) {
 	quad *tmp;
 	while(*t) {
-		 tmp = (*t)->next;
-		 free(*t);
-		 *t = tmp;
+		tmp = (*t)->next;
+		free(*t);
+		*t = tmp;
 	}
 }
 
 void quad_print(quad *t) {
 	while(t) {
-		 printf("Label : %s\n\n",t->label);
-		 t = t->next;
-	  }
+		printf("Label : %s\n\n",t->label);
+		t = t->next;
+	}
 }
 
 void quad_complete(quad *t, char* value) {
