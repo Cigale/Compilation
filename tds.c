@@ -31,7 +31,7 @@ tds* tds_lookup(tds **p, char* name) {
 	tds *tmp = *p;
 	if(!*p) return NULL;
 	if(!name) return NULL;
-		
+
 	while(strcmp((*p)->id, name) != 0 && (*p)->next != NULL) {
 		*p = (*p)->next;
 	}
@@ -47,15 +47,15 @@ tds* tds_lookup(tds **p, char* name) {
 void tds_clear(tds **t) {
 	tds *tmp;
 	while(*t) {
-		 tmp = (*t)->next;
-		 free(*t);
-		 *t = tmp;
+		tmp = (*t)->next;
+		free(*t);
+		*t = tmp;
 	}
 }
 
 void tds_print(tds *t) {
 	while(t) {
-		 printf("%s\t%d\t%s\n",t->id, t->isConstant, t->value);
-		 t = t->next;
-	  }
+		printf("%s\t%d\t%s\n",t->id, t->isConstant, t->value);
+		t = t->next;
+	}
 }
