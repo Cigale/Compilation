@@ -28,11 +28,10 @@ int yyerror(char *s);
 %token <data> TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
 %token <id> TK_BOOLOP TK_NUMBER TK_IDENT
 
-%type <data> Condition Expression
+/*%type <data> Expression*/
 
 %left '+' '-' TK_TIMES TK_DIV
 %right TK_LEFT
-%nonassoc MOINSU
 
 %start Algos
 
@@ -117,19 +116,19 @@ Affectation:
 	;
 
 While:
-	TK_WHILE '{' '$' Condition '$' '}' '{' Code '}'
+	TK_WHILE '{' '$' Expression '$' '}' '{' Code '}'
 	;
 
 Repeat:
-	TK_REPEAT '{' '$' Condition '$' '}' '{' Code '}'
+	TK_REPEAT '{' '$' Expression '$' '}' '{' Code '}'
 	;
 
 If:
-	TK_IF '{' '$' Condition '$' '}' '{' Code '}'
+	TK_IF '{' '$' Expression '$' '}' '{' Code '}'
 	;
 
 Eif:
-	TK_EIF '{' '$' Condition '$' '}' '{' Code '}' '{' Code '}'
+	TK_EIF '{' '$' Expression '$' '}' '{' Code '}' '{' Code '}'
 	;
 
 For:
@@ -141,116 +140,51 @@ Mbox:
 	| '$' TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' '$'
 	;
 
-Condition
-	: Expression TK_OR Condition {
-		printf("Mem : %d\n", $3);
-		printf("Mem.code : %d\n", $3.code);
-		printf("Mem.addr : %d\n", $3.addr);
-		printf("Mem.code->label : %s\n", $3.code->label);
-		quad_complete($1.falselist, $3.code->label);
-		$$.truelist = quad_concat($1.truelist, $3.truelist);
-		$$.falselist = $3.falselist;
-		$$.code = NULL;
-		quad_add($$.code, $1.code);
-		quad_add($$.code, $3.code);
-	}
-	| Expression TK_AND Condition {
-		quad_complete($1.truelist, $3.code->label);
-		$$.falselist = quad_concat($1.falselist, $3.falselist);
-		$$.truelist = $3.truelist;
-		$$.code = NULL;
-		quad_add($$.code, $1.code);
-		quad_add($$.code, $3.code);
-	}
-	| TK_NOT Condition {
-		$$.code = $2.code;
-		$$.truelist = $2.falselist;
-		$$.falselist = $2.truelist;
-	}
-	| '(' Condition ')' {
-		$$.code = $2.code;
-		$$.truelist = $2.truelist;
-		$$.falselist = $2.falselist;
-	}
-	| Expression {
-		$$.code = NULL;
-		tds* t = tds_put(&symbols, "", 1);
-		t->value = "0";
-		t->type = "int";
-		tds* t2 = tds_put(&symbols, "", 1);
-		t2->value = "GOTO ?";
-		t2->type = "char*";
-		quad_put($$.code, $1.addr, t, t2, "!=");
-	}
-	| Expression TK_BOOLOP Condition {
-		$$.code = NULL;
-		tds* t = tds_put(&symbols, "", 1);
-		t->value = "GOTO ?";
-		t->type = "char*";
-		quad* q = quad_put($$.code, $1.addr, $3.addr, t, (char*) $2);
-		$$.truelist = quad_add(NULL, q);
-		tds* t2 = tds_put(&symbols, "", 1);
-		t2->value = "GOTO ?";
-		t2->type = "char*";
-		quad* q2 = quad_put($$.code, NULL, NULL, t2, "");
-		$$.falselist = quad_add(NULL, q2);
-	}
+Expression:
+	ExpressionOr
 	;
 
-Expression:
-	Expression '+' Expression {
-		$$.addr = tds_put(&symbols, "", FALSE);
-		$$.code = quad_put(NULL, $1.addr, $3.addr, $$.addr, "+");
-	}
-	| '-' Expression %prec MOINSU {
-		$$.addr = tds_put(&symbols, "", FALSE);
-		$$.code = quad_put(NULL, $2.addr, NULL, $$.addr, "-");
-	}
-	| Expression '-' Expression {
-		$$.addr = tds_put(&symbols, "", FALSE);
-		$$.code = quad_put(NULL, $1.addr, $3.addr, $$.addr, "-");
-	}
-	| Expression TK_TIMES Expression {
-		$$.addr = tds_put(&symbols, "", FALSE);
-		$$.code = quad_put(NULL, $1.addr, $3.addr, $$.addr, "*");
-	}
-	| Expression TK_DIV Expression {
-		$$.addr = tds_put(&symbols, "", FALSE);
-		$$.code = quad_put(NULL, $1.addr, $3.addr, $$.addr, "/");
-	}
-	| Mbox { // Fonction
-	}
-	| TK_IDENT {
-		$$.addr = tds_lookup(&symbols, $1);
-		$$.code = NULL;
-	}
-	| TK_IDENT TableValue {
-		$$.addr = tds_lookup(&symbols, $1);
-		$$.code = NULL;
-	}
-	| TK_NUMBER {
-		$$.addr = tds_put(&symbols, "", TRUE);
-		$$.addr->value = $1;
-		$$.code = NULL;
-	}
-	| TK_FALSE {
-		$$.addr = tds_put(&symbols, "", TRUE);
-		$$.addr->value = "0";
-		$$.code = quad_put(NULL, $$.addr, NULL, $$.addr, "!=");
-		$$.falselist = NULL;
-		$$.truelist = NULL;
-	}
-	| TK_TRUE {
-		$$.addr = tds_put(&symbols, "", TRUE);
-		$$.addr->value = "1";
-		$$.code = quad_put(NULL, $$.addr, NULL, $$.addr, "==");
-		$$.falselist = NULL;
-		$$.truelist = NULL;
-		printf("Mem : %d\n", $$);
-		printf("Mem.code : %d\n", $$.code);
-		printf("Mem.addr : %d\n", $$.addr);
-		printf("Mem.code->label : %s\n", $$.code->label);
-	}
+ExpressionOr:
+	ExpressionOr TK_OR ExpressionAnd
+	| ExpressionAnd
+	;
+
+ExpressionAnd:
+	ExpressionAnd TK_AND ExpressionRel
+	| ExpressionRel
+	;
+
+ExpressionRel:
+	ExpressionAdd TK_BOOLOP ExpressionAdd
+	| ExpressionAdd
+	;
+
+ExpressionAdd:
+	ExpressionAdd '+' ExpressionMult
+	| ExpressionAdd '-' ExpressionMult
+	| ExpressionMult
+	;
+
+ExpressionMult:
+	ExpressionMult TK_TIMES ExpressionUnary
+	| ExpressionMult TK_DIV ExpressionUnary
+	| ExpressionUnary
+	;
+
+ExpressionUnary:
+	TK_NOT ExpressionUnary
+	| '-' ExpressionUnary
+	| ExpressionPrimary
+	;
+
+ExpressionPrimary:
+	TK_NUMBER
+	| TK_IDENT
+	| TK_IDENT TableValue
+	| TK_TRUE
+	| TK_FALSE
+	| Mbox
+	| '(' Expression ')'
 	;
 
 %%
