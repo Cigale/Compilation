@@ -5,57 +5,73 @@
 
 int nbTmp = 0;
 
-tds* tds_put(tds **t, char *id, int isConstant) {
-	tds *element = malloc(sizeof(tds));
-	if(!element) exit(EXIT_FAILURE);
+struct scope *scope_add_symbol(struct scope *sc, char *id, struct type t, int isConstant, char *value) {
+	struct symbol *sym;
 
-	if(strcmp(id, "") == 0) {
-		id = (char*) malloc(sizeof(char) * 14);
-		strcat(id, "TMP_");
-		char* s = (char*) malloc(sizeof(char) * 10);
-		sprintf(s, "%d", nbTmp);
+	if (id != NULL && scope_lookup(sc, id) != NULL) {
+		fprintf(stderr, "Error, symbol %s declared twice\n", id);
+		exit(EXIT_FAILURE);
+	}
+
+	if (isConstant && value != NULL) {
+		fprintf(stderr, "Only constants can have a value\n");
+		exit(EXIT_FAILURE);
+	}
+
+	sym = malloc(sizeof(*sym));
+	if (!sym) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	if (id == NULL) {
+		id = malloc(sizeof(char) * 14);
+		snprintf(id, 14, "TMP_%d", nbTmp);
 		nbTmp++;
-		strcat(id, s);
 	}
 
-	element->id = id;
-	element->isConstant = isConstant;
-	element->next = *t;
-	*t = element;
+	sym->id = id;
+	sym->type = t;
+	sym->isConstant = isConstant;
+	sym->value = value;
+	sym->next = sc->tds;
 
-	return element;
+	sc->tds = sym;
+
+	return sc;
 }
 
-tds* tds_lookup(tds **p, char* name) {
-	tds *res = NULL;
-	tds *tmp = *p;
-	if(!*p) return NULL;
-	if(!name) return NULL;
+struct symbol* scope_lookup(struct scope *sc, char *name) {
+	struct symbol *sym;
 
-	while(strcmp((*p)->id, name) != 0 && (*p)->next != NULL) {
-		*p = (*p)->next;
+	if (sc == NULL)
+		return NULL;
+
+	for (sym = sc->tds; sym->next != NULL; sym = sym->next) {
+		if (strcmp(sym->id, name) == 0)
+			return sym;
 	}
 
-	if(strcmp((*p)->id, name) != 0) {
-		res = *p;
-	}
-
-	*p = tmp;
-	return res;
+	return scope_lookup(sc->parent, name);
 }
 
-void tds_clear(tds **t) {
-	tds *tmp;
-	while(*t) {
-		tmp = (*t)->next;
-		free(*t);
-		*t = tmp;
+void scope_clear(struct scope *sc) {
+	struct symbol *tmp;
+
+	while(sc->tds != NULL) {
+		tmp = sc->tds->next;
+		free(tmp);
+		sc->tds = tmp;
 	}
 }
 
-void tds_print(tds *t) {
-	while(t) {
-		printf("%s\t%d\t%s\n",t->id, t->isConstant, t->value);
-		t = t->next;
+void scope_print(struct scope *sc) {
+	struct symbol *sym;
+
+	for (sym = sc->tds; sym->next != NULL; sym = sym->next) {
+		if (sym->isConstant)
+			printf("%s = %s\n", sym->id, sym->isConstant, sym->value);
+		else
+			printf("%s\n", sym->id);
 	}
 }

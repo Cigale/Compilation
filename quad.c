@@ -6,7 +6,7 @@
 
 int next_quad = 0;
 
-quad* quad_put(quad *t, tds *op1, tds *op2, tds *res, char* op) {
+quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *res, char* op) {
 
 	quad *element = malloc(sizeof(quad));
 	if(!element) exit(-1);

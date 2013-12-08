@@ -6,7 +6,7 @@
 #include "constants.h"
 
 FILE* yyin;
-tds* symbols;
+struct scope* cur_scope;
 
 int yyerror(char *s);
 
@@ -14,7 +14,7 @@ int yyerror(char *s);
 
 %union {
 	struct data {
-		tds* addr;
+		struct scope* addr;
 		quad* code;
 		quad* truelist;
 		quad* falselist;
