@@ -21,6 +21,6 @@ mrproper: clean
 
 .PHONY: exec run
 exec:
-	./compiler
+	./compiler test.tex
 
 run: all exec
