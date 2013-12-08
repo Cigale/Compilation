@@ -58,7 +58,7 @@ quad* quad_take(quad **p) {
 	res = *p;
 	tmp = (*p)->next;
 	free(*p);
-	*p = tmp;       /* Le pointeur pointe sur le dernier élément. */
+	*p = tmp;       
 	return res;
 }
 
@@ -81,3 +81,106 @@ void quad_print(quad *t) {
 void quad_complete(quad *t, char* value) {
 	t->res->value = value;
 }
+
+void mips_gen(quad **q, tds *t) {
+	quad* current = quad_take(q);
+	
+	while(current) {
+		write_mips(current);
+		current = quad_take(q, t);
+	}
+}
+
+void mips_write(quad* q, tds* t) {
+
+	FILE* file = NULL;
+	
+	file = fopen("res.s", "w+");
+	
+	if(file != NULL) {
+	
+		switch(t->quad_type) {
+			case AFFEC_UNARY_MINUS : 
+				if(t->operande1->isConstant) {
+					fprintf("neg %s, %d", t->res->id, t->operande1->value, file);
+				} else {
+					fprintf("neg %s, %d", t->res->id, t->operande1->id, file);
+				}
+			break;
+			
+			case AFFEC_UNARY_NOT : fprintf("not %s, %s", t->res->id, t->operande1->id, file);
+			break;
+			
+			case AFFEC_BINARY_PLUS : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf("add %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
+					} else {
+						fprintf("add %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf("add %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
+					} else {
+						fprintf("add %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_MINUS : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf("sub %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
+					} else {
+						fprintf("sub %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf("sub %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
+					} else {
+						fprintf("sub %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_MULT : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf("mult %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
+					} else {
+						fprintf("mult %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf("mult %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
+					} else {
+						fprintf("mult %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_DIV : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf("div %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
+					} else {
+						fprintf("div %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf("div %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
+					} else {
+						fprintf("div %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
+					}
+				}
+			break;
+		}
+		
+		fclose(file);
+	} else {
+		printf("Impossible d'ouvrir le fichier MIPS\n");
+		exit(-1);
+	}
+}
+
+
