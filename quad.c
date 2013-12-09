@@ -83,15 +83,6 @@ void quad_complete(quad *t, char* value) {
 }
 
 void mips_gen(quad **q, tds *t) {
-	quad* current = quad_take(q);
-	
-	while(current) {
-		write_mips(current);
-		current = quad_take(q, t);
-	}
-}
-
-void mips_write(quad* q, tds* t) {
 
 	FILE* file = NULL;
 	
@@ -99,81 +90,13 @@ void mips_write(quad* q, tds* t) {
 	
 	if(file != NULL) {
 	
-		switch(t->quad_type) {
-			case AFFEC_UNARY_MINUS : 
-				if(t->operande1->isConstant) {
-					fprintf("neg %s, %d", t->res->id, t->operande1->value, file);
-				} else {
-					fprintf("neg %s, %d", t->res->id, t->operande1->id, file);
-				}
-			break;
-			
-			case AFFEC_UNARY_NOT : fprintf("not %s, %s", t->res->id, t->operande1->id, file);
-			break;
-			
-			case AFFEC_BINARY_PLUS : 
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf("add %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
-					} else {
-						fprintf("add %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf("add %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
-					} else {
-						fprintf("add %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
-					}
-				}
-			break;
-			
-			case AFFEC_BINARY_MINUS : 
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf("sub %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
-					} else {
-						fprintf("sub %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf("sub %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
-					} else {
-						fprintf("sub %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
-					}
-				}
-			break;
-			
-			case AFFEC_BINARY_MULT : 
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf("mult %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
-					} else {
-						fprintf("mult %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf("mult %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
-					} else {
-						fprintf("mult %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
-					}
-				}
-			break;
-			
-			case AFFEC_BINARY_DIV : 
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf("div %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value, file);
-					} else {
-						fprintf("div %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id, file);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf("div %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value, file);
-					} else {
-						fprintf("div %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id file);
-					}
-				}
-			break;
+		// TODO: enregistrer les symboles dans la pile du programme MIPS
+	
+		quad* current = quad_take(q);
+	
+		while(current) {
+			mips_write(current, NULL, file);
+			current = quad_take(q);
 		}
 		
 		fclose(file);
@@ -181,6 +104,96 @@ void mips_write(quad* q, tds* t) {
 		printf("Impossible d'ouvrir le fichier MIPS\n");
 		exit(-1);
 	}
+}
+
+void mips_write(quad* t, tds* symbols, FILE* file) {
+	
+		// Pour charger / enregistrer une variable de la pile au registre :
+		
+		// lw $t0 (8$sp)
+		// lw : load valeur de la pile
+		// $t0 position dans le registre
+		// 8 : position dans la pile (multiples de 4)
+		// $sp : Représente la pile
+		
+		// sw $t0 (8$sp)
+		
+		switch(t->quad_type) {
+			case AFFEC_UNARY_MINUS : 
+				if(t->operande1->isConstant) {
+					fprintf(file, "neg %s, %d", t->res->id, t->operande1->value);
+				} else {
+					fprintf(file, "neg %s, %d", t->res->id, t->operande1->id);
+				}
+			break;
+			
+			case AFFEC_UNARY_NOT : fprintf(file, "not %s, %s", t->res->id, t->operande1->id);
+			break;
+			
+			case AFFEC_BINARY_PLUS : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf(file, "add %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
+					} else {
+						fprintf(file, "add %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf(file, "add %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
+					} else {
+						fprintf(file, "add %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_MINUS : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf(file, "sub %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
+					} else {
+						fprintf(file, "sub %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf(file, "sub %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
+					} else {
+						fprintf(file, "sub %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_MULT : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf(file, "mult %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
+					} else {
+						fprintf(file, "mult %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf(file, "mult %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
+					} else {
+						fprintf(file, "mult %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
+					}
+				}
+			break;
+			
+			case AFFEC_BINARY_DIV : 
+				if(t->operande1->isConstant) {
+					if(t->operande2->isConstant) {
+						fprintf(file, "div %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
+					} else {
+						fprintf(file, "div %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
+					}
+				} else {
+					if(t->operande2->isConstant) {
+						fprintf(file, "div %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
+					} else {
+						fprintf(file, "div %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
+					}
+				}
+			break;
+		}
 }
 
 

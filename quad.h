@@ -24,6 +24,7 @@
 		tds* operande2;
 		tds* res;
 		char* operateur;
+		int quad_type;
 		struct quad* next;
 		struct quad* last;
 	} quad;
@@ -35,6 +36,7 @@
 	void quad_clear(quad **t);
 	void quad_print(quad *t);
 	void quad_complete(quad *t, char* value);
-	void generate_mips(quad *t);
+	void mips_gen(quad **q, tds *t);
+	void mips_write(quad* t, tds* symbols, FILE* file);
 	
 #endif
