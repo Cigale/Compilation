@@ -33,7 +33,7 @@ typedef struct quad {
 	struct symbol *operande2;
 	struct symbol *res;
 	char *operateur;
-        int quad_type;
+	int quad_type;
 	struct quad *next;
 	struct quad *last;
 } quad;
