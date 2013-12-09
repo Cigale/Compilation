@@ -6,6 +6,7 @@
 		int isConstant;
 		char* value;
 		char* type;
+		int memPos;
 		struct tds* next;
 	} tds;
 
