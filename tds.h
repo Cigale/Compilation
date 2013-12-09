@@ -10,13 +10,8 @@ enum scalar {
 
 struct type {
 	int is_scalar;
-	union {
-		enum scalar stype;
-		struct {
-			enum scalar stype;
-			int size;
-		} vector;
-	} v;
+	enum scalar stype;
+	int size; /* Meaningless if is_scalar is set */
 };
 
 struct symbol {
@@ -33,11 +28,13 @@ struct scope {
 	struct scope *parent;
 };
 
-struct scope *scope_add_symbol(struct scope *sc, char *id, struct type t, int isConstant, char *value);
+struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value);
+struct scope *scope_create(struct scope *parent);
+struct scope *scope_add_symbol(struct scope *sc, struct symbol *sym);
+struct scope *scope_import(struct scope *sc, struct scope *sci);
 struct symbol *scope_lookup(struct scope *sc, char* name);
-
-
-/*void tds_clear(tds **t);
-void tds_print(tds *t);*/
+void scope_free(struct scope *sc);
+void scope_print(struct scope *sc);
+void scope_print_all(struct scope *sc);
 
 #endif

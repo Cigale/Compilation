@@ -1,3 +1,10 @@
+enum scope_type {
+	SCOPE_CONST,
+	SCOPE_INPUT,
+	SCOPE_OUTPUT,
+	SCOPE_GLOBAL,
+	SCOPE_LOCAL
+};
 
 #define TRUE 1
 #define FALSE 0

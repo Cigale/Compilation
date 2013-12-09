@@ -1,4 +1,5 @@
 %{
+#include <stdlib.h>
 #include "tds.h"
 #include "quad.h"
 #include "constants.h"
@@ -50,11 +51,11 @@ divOp           "\\div"
 }
 
 <ALGO>{
-	{cmdConst}          return TK_CONST;
-	{cmdInput}          return TK_INPUT;
-	{cmdOutput}         return TK_OUTPUT;
-	{cmdGlobal}         return TK_GLOBAL;
-	{cmdLocal}          return TK_LOCAL;
+	{cmdConst}          yylval.scope_type = SCOPE_CONST; return TK_CONST;
+	{cmdInput}          yylval.scope_type = SCOPE_INPUT; return TK_INPUT;
+	{cmdOutput}         yylval.scope_type = SCOPE_OUTPUT; return TK_OUTPUT;
+	{cmdGlobal}         yylval.scope_type = SCOPE_GLOBAL; return TK_GLOBAL;
+	{cmdLocal}          yylval.scope_type = SCOPE_LOCAL; return TK_LOCAL;
 	{cmdBlk}            return TK_BLK;
 	{cmdEmpty}          return TK_EMPTY;
 	{cmdLeft}           return TK_LEFT;
@@ -67,8 +68,8 @@ divOp           "\\div"
 	{cmdEif}            return TK_EIF;
 	{cmdTo}             return TK_TO;
 	{cmdMbox}           return TK_MBOX;
-	{identifier}        return TK_IDENT;
-	{number}            return TK_NUMBER;
+	{identifier}        yylval.id = strdup(yytext); return TK_IDENT;
+	{number}            yylval.intval = atoi(yytext); return TK_NUMBER;
 	{endInst}           return TK_ENDINST;
 	{booleanOp}         return TK_BOOLOP;
 	{booleanNOT}        return TK_NOT;

@@ -5,8 +5,9 @@
 #include "quad.h"
 #include "constants.h"
 
-FILE* yyin;
-struct scope* cur_scope;
+FILE *yyin;
+
+struct scope *cur_scope = NULL;
 
 int yyerror(char *s);
 
@@ -19,15 +20,25 @@ int yyerror(char *s);
 		quad* truelist;
 		quad* falselist;
 	} data;
+	struct scope *scope;
+	struct symbol *symbol;
+	struct type type;
+	enum scope_type scope_type;
 	char* id;
+	int intval;
 }
 
-%token <data> TK_CONST TK_INPUT TK_OUTPUT TK_GLOBAL TK_LOCAL TK_BLK
-%token <data> TK_ENDINST TK_LEFT TK_FOR TK_WHILE TK_IF TK_EIF TK_REPEAT
-%token <data> TK_EMPTY TK_IN TK_TYPE TK_TO TK_MBOX
-%token <data> TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
-%token <id> TK_BOOLOP TK_NUMBER TK_IDENT
+%token <scope_type> TK_CONST TK_INPUT TK_OUTPUT TK_GLOBAL TK_LOCAL
+%token TK_BLK TK_ENDINST TK_LEFT TK_FOR TK_WHILE TK_IF TK_EIF TK_REPEAT
+%token TK_EMPTY TK_IN TK_TYPE TK_TO TK_MBOX
+%token TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
+%token TK_BOOLOP
+%token <intval> TK_NUMBER
+%token <id> TK_IDENT
 
+%type <scope> Declarations Declarations_List
+%type <symbol> Parameter
+%type <type> Type
 /*%type <data> Expression*/
 
 %left '+' '-' TK_TIMES TK_DIV
@@ -43,28 +54,50 @@ Algos:
 	;
 
 Algo:
-	Const Input Output Global Local Blankline Code
+	Const Input Output Global Local Blankline Code {
+		/* TODO: Faire un truc plus intelligent pour garder les globales */
+		while (cur_scope != NULL) {
+			struct scope *sc = cur_scope->parent;
+			scope_free(cur_scope);
+			cur_scope = sc;
+		}
+	}
 	;
 
 Const:
-	TK_CONST '{' '$' Declarations '$' '}' {printf("Constant found\n");}
+	TK_CONST {
+		cur_scope = scope_create(cur_scope);
+	}
+		'{' '$' Declarations '$' '}' {printf("Constant found\n");}
 	| {printf("No Constant found\n");}
 	;
 
 Input:
-	TK_INPUT '{' '$' Declarations '$' '}' {printf("Input found\n");}
+	TK_INPUT {
+		cur_scope = scope_create(cur_scope);
+	}
+		'{' '$' Declarations '$' '}' {printf("Input found\n");}
 	;
 
 Output:
-	TK_OUTPUT '{' '$' Declarations '$' '}' {printf("Output found\n");}
+	TK_OUTPUT {
+		cur_scope = scope_create(cur_scope);
+	}
+		'{' '$' Declarations '$' '}' {printf("Output found\n");}
 	;
 
 Global:
-	TK_GLOBAL '{' '$' Declarations '$' '}' {printf("Global found\n");}
+	TK_GLOBAL {
+		cur_scope = scope_create(cur_scope);
+	}
+		'{' '$' Declarations '$' '}' {printf("Global found\n");}
 	;
 
 Local:
-	TK_LOCAL '{' '$' Declarations '$' '}' {printf("Local found\n");}
+	TK_LOCAL {
+		cur_scope = scope_create(cur_scope);
+	}
+		'{' '$' Declarations '$' '}' {printf("Local found\n");}
 	;
 
 Blankline:
@@ -72,27 +105,41 @@ Blankline:
 	;
 
 Declarations:
-	TK_EMPTY
-	| Declarations_List
+	TK_EMPTY {
+		$$ = cur_scope;
+	}
+	| Declarations_List {
+		$$ = $1;
+	}
 	;
 
 Declarations_List:
-	Declarations_List ',' Parameter
-	| Parameter
+	Declarations_List ',' Parameter {
+		$$ = scope_add_symbol($1, $3);
+	}
+	| Parameter {
+		$$ = scope_add_symbol(cur_scope, $1);
+	}
 	;
 
 Parameter:
-	TK_IDENT TK_IN TK_TYPE Table
+	TK_IDENT TK_IN Type {$$ = symbol_create($1, $3, FALSE, NULL);}
 	;
 
-Table:
-	'^' '{' TK_NUMBER '}'
-	|
+Type:
+	TK_TYPE {
+		$$.is_scalar = TRUE;
+		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+	}
+	| TK_TYPE '^' '{' TK_NUMBER '}' {
+		$$.is_scalar = FALSE;
+		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+		$$.size = $4;
+	}
 	;
 
 TableValue:
-	'_' '{' TK_NUMBER '}'
-	| '_' '{' TK_IDENT '}'
+	'_' '{' Expression '}'
 	;
 
 Code:
