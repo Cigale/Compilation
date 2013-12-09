@@ -1,6 +1,7 @@
 %{
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "tds.h"
 #include "quad.h"
 #include "constants.h"
@@ -37,7 +38,7 @@ int yyerror(char *s);
 %token <id> TK_IDENT
 
 %type <scope> Declarations Declarations_List
-%type <symbol> Parameter
+%type <symbol> Parameter ExpressionPrimary
 %type <type> Type
 /*%type <data> Expression*/
 
@@ -221,17 +222,41 @@ ExpressionMult:
 ExpressionUnary:
 	TK_NOT ExpressionUnary
 	| '-' ExpressionUnary
+	| '(' Expression ')'
+	| Mbox
+	| TK_IDENT TableValue
 	| ExpressionPrimary
 	;
 
 ExpressionPrimary:
-	TK_NUMBER
-	| TK_IDENT
-	| TK_IDENT TableValue
-	| TK_TRUE
-	| TK_FALSE
-	| Mbox
-	| '(' Expression ')'
+	TK_NUMBER {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_INT;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, $1);
+	}
+	| TK_IDENT {
+		$$ = scope_lookup(cur_scope, $1);
+		if ($$ == NULL) {
+			fprintf(stderr, "Symbol %s undefined\n", $1);
+			exit(EXIT_FAILURE);
+		}
+	}
+	| TK_TRUE {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_BOOL;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, TRUE);
+	}
+	| TK_FALSE {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_BOOL;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, TRUE);
+	}
 	;
 
 %%
