@@ -82,7 +82,7 @@ void quad_complete(quad *t, char *value) {
 	t->res->value = value;
 }
 
-void mips_gen(quad **q) {
+void mips_gen(quad **q, struct symbol* s) {
 
 	FILE* file = NULL;
 
@@ -142,7 +142,7 @@ void mips_write(quad *t, FILE *file) {
 			case AFFEC_BINARY_AND : fprintf(file, "and %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 			
-			case AFFEC_BINARY_OR : fprintf(file, "or %d, %d, %d", t->operande1->vlaue, t->operande2->memPos, t->res->memPos);
+			case AFFEC_BINARY_OR : fprintf(file, "or %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 			
 			case BRANCHMENT_UNCOND : fprintf(file, "j %d", t->res->memPos);
@@ -188,7 +188,7 @@ void mips_write(quad *t, FILE *file) {
 			}
 			break;
 			
-			case PROC_CALL : fprintf("jal %d", t->res->memPos);
+			case PROC_CALL : fprintf(file, "jal %d", t->res->memPos);
 				proc_param_nb = 0;
 			break;
 			

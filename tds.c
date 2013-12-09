@@ -114,7 +114,7 @@ void scope_print(struct scope *sc) {
 
 	for (sym = sc->tds; sym != NULL; sym = sym->next) {
 		if (sym->isConstant)
-			printf("%s = %s\n", sym->id, sym->isConstant, sym->value);
+			printf("%s = %s\n", sym->id, sym->value);
 		else
 			printf("%s\n", sym->id);
 	}
