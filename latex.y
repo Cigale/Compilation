@@ -42,9 +42,6 @@ int yyerror(char *s);
 %type <type> Type
 /*%type <data> Expression*/
 
-%left '+' '-' TK_TIMES TK_DIV
-%right TK_LEFT
-
 %start Algos
 
 %%
