@@ -16,7 +16,7 @@ struct type {
 
 struct symbol {
 	struct symbol *next;
-
+	int memPos;
 	char *id;
 	struct type type;
 	int isConstant;

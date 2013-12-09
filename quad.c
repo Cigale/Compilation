@@ -82,7 +82,7 @@ void quad_complete(quad *t, long value) {
 	t->res->value = value;
 }
 
-void mips_gen(quad **q) {
+void mips_gen(quad **q, struct symbol* s) {
 
 	FILE* file = NULL;
 
@@ -117,82 +117,88 @@ void mips_write(quad *t, FILE *file) {
 		// $sp : Représente la pile
 
 		// sw $t0 (8$sp)
-
+		
+		int proc_param_nb = 0;
+		
 		switch(t->quad_type) {
-			case AFFEC_UNARY_MINUS :
-				if(t->operande1->isConstant) {
-					fprintf(file, "neg %s, %d", t->res->id, t->operande1->value);
-				} else {
-					fprintf(file, "neg %s, %d", t->res->id, t->operande1->id);
-				}
+			case AFFEC_UNARY_MINUS : fprintf(file, "neg %d, %d", t->res->memPos, t->operande1->memPos);
 			break;
-
-			case AFFEC_UNARY_NOT : fprintf(file, "not %s, %s", t->res->id, t->operande1->id);
+			
+			case AFFEC_UNARY_NOT : fprintf(file, "not %d, %d", t->res->memPos, t->operande1->memPos);
 			break;
-
-			case AFFEC_BINARY_PLUS :
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf(file, "add %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
-					} else {
-						fprintf(file, "add %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf(file, "add %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
-					} else {
-						fprintf(file, "add %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
-					}
-				}
+			
+			case AFFEC_BINARY_PLUS : fprintf(file, "add %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
-
-			case AFFEC_BINARY_MINUS :
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf(file, "sub %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
-					} else {
-						fprintf(file, "sub %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf(file, "sub %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
-					} else {
-						fprintf(file, "sub %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
-					}
-				}
+			
+			case AFFEC_BINARY_MINUS : fprintf(file, "sub %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
-
-			case AFFEC_BINARY_MULT :
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf(file, "mult %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
-					} else {
-						fprintf(file, "mult %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf(file, "mult %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
-					} else {
-						fprintf(file, "mult %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
-					}
-				}
+			
+			case AFFEC_BINARY_MULT : fprintf(file, "mult %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
-
-			case AFFEC_BINARY_DIV :
-				if(t->operande1->isConstant) {
-					if(t->operande2->isConstant) {
-						fprintf(file, "div %s, %d, %d", t->res->id, t->operande1->value, t->operande2->value);
-					} else {
-						fprintf(file, "div %s, %d, %s", t->res->id, t->operande1->value, t->operande2->id);
-					}
-				} else {
-					if(t->operande2->isConstant) {
-						fprintf(file, "div %s, %s, %d", t->res->id, t->operande1->id, t->operande2->value);
-					} else {
-						fprintf(file, "div %s, %s, %s", t->res->id, t->operande1->id, t->operande2->id);
-					}
-				}
+			
+			case AFFEC_BINARY_DIV : fprintf(file, "div %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
+			
+			case AFFEC_BINARY_AND : fprintf(file, "and %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case AFFEC_BINARY_OR : fprintf(file, "or %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_UNCOND : fprintf(file, "j %d", t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_EQ : fprintf(file, "beq %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_NEQ : fprintf(file, "bne %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_LT : fprintf(file, "blt %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_LTEQ : fprintf(file, "ble %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_GT : fprintf(file, "bgt %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case BRANCHMENT_COND_GTEQ : fprintf(file, "bge %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			break;
+			
+			case PROC_PARAM : switch(proc_param_nb) {
+				case 0 : fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+				proc_param_nb++;
+				break;
+				
+				case 1 : fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+				proc_param_nb++;
+				break;
+				
+				case 2 : fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+				proc_param_nb++;
+				break;
+				
+				case 3 : fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+				proc_param_nb++;
+				break;
+				
+				default : // Enregistrer les paramètres suivants dans la pile ?
+				break;
+			}
+			break;
+			
+			case PROC_CALL : fprintf(file, "jal %d", t->res->memPos);
+				proc_param_nb = 0;
+			break;
+			
+			case TAB_LEFT :
+			break;
+			
+			case TAB_RIGHT :
+			break;
+			
+			
 		}
 }
 
