@@ -6,7 +6,7 @@
 
 int next_quad = 0;
 
-quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *res, char* op) {
+quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *res, enum quad_type type) {
 
 	quad *element = malloc(sizeof(quad));
 	if(!element) exit(-1);
@@ -16,7 +16,7 @@ quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 	element->operande1 = op1;
 	element->operande2 = op2;
 	element->res = res;
-	element->operateur = op;
+	element->quad_type = type;
 
 	if(!t) {
 		t = element;
