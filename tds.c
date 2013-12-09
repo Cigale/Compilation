@@ -3,59 +3,126 @@
 #include <string.h>
 #include "tds.h"
 
+void scope_clear(struct scope *sc);
+
 int nbTmp = 0;
 
-tds* tds_put(tds **t, char *id, int isConstant) {
-	tds *element = malloc(sizeof(tds));
-	if(!element) exit(EXIT_FAILURE);
+struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value) {
+	struct symbol *sym;
 
-	if(strcmp(id, "") == 0) {
-		id = (char*) malloc(sizeof(char) * 14);
-		strcat(id, "TMP_");
-		char* s = (char*) malloc(sizeof(char) * 10);
-		sprintf(s, "%d", nbTmp);
+	sym = malloc(sizeof(*sym));
+	if (!sym) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	memset(sym, 0, sizeof(*sym));
+
+	if (!isConstant && value != NULL) {
+		fprintf(stderr, "Only constants can have a value\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (isConstant && value == NULL) {
+		fprintf(stderr, "A constant must have a value\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (id == NULL) {
+		id = malloc(sizeof(char) * 14);
+		snprintf(id, 14, "TMP_%d", nbTmp);
 		nbTmp++;
-		strcat(id, s);
 	}
 
-	element->id = id;
-	element->isConstant = isConstant;
-	element->next = *t;
-	*t = element;
+	sym->id = id;
+	sym->type = t;
+	sym->isConstant = isConstant;
+	sym->value = value;
 
-	return element;
+	return sym;
 }
 
-tds* tds_lookup(tds **p, char* name) {
-	tds *res = NULL;
-	tds *tmp = *p;
-	if(!*p) return NULL;
-	if(!name) return NULL;
-		
-	while(strcmp((*p)->id, name) != 0 && (*p)->next != NULL) {
-		*p = (*p)->next;
-	}
+struct scope *scope_create(struct scope *parent) {
+	struct scope *sc = malloc(sizeof(*sc));
 
-	if(strcmp((*p)->id, name) != 0) {
-		res = *p;
+	if (sc == NULL) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
 	}
+	memset(sc, 0, sizeof(*sc));
 
-	*p = tmp;
-	return res;
+	sc->parent = parent;
+
+	return sc;
 }
 
-void tds_clear(tds **t) {
-	tds *tmp;
-	while(*t) {
-		 tmp = (*t)->next;
-		 free(*t);
-		 *t = tmp;
+struct scope *scope_add_symbol(struct scope *sc, struct symbol *sym) {
+	if (sc == NULL)
+		sc = scope_create(NULL);
+
+	if (sym->id != NULL && scope_lookup(sc, sym->id) != NULL) {
+		fprintf(stderr, "Error, symbol %s declared twice\n", sym->id);
+		exit(EXIT_FAILURE);
+	}
+
+	sym->next = sc->tds;
+	sc->tds = sym;
+
+	return sc;
+}
+
+struct scope *scope_import(struct scope *sc, struct scope *sci) {
+	struct symbol *sym;
+
+	for (sym = sci->tds; sym != NULL; sym = sym->next)
+		scope_add_symbol(sc, sym);
+
+	scope_free(sci);
+
+	return sc;
+}
+
+struct symbol* scope_lookup(struct scope *sc, char *name) {
+	struct symbol *sym;
+
+	if (sc == NULL)
+		return NULL;
+
+	for (sym = sc->tds; sym != NULL; sym = sym->next) {
+		if (strcmp(sym->id, name) == 0)
+			return sym;
+	}
+
+	return scope_lookup(sc->parent, name);
+}
+
+void scope_clear(struct scope *sc) {
+	while(sc->tds != NULL) {
+		struct symbol *tmp = sc->tds->next;
+		free(tmp);
+		sc->tds = tmp;
 	}
 }
 
-void tds_print(tds *t) {
-	while(t) {
-		 printf("%s\t%d\t%s\n",t->id, t->isConstant, t->value);
-		 t = t->next;
-	  }
+void scope_free(struct scope *sc) {
+	scope_clear(sc);
+	free(sc);
+}
+
+void scope_print(struct scope *sc) {
+	struct symbol *sym;
+
+	for (sym = sc->tds; sym != NULL; sym = sym->next) {
+		if (sym->isConstant)
+			printf("%s = %s\n", sym->id, sym->isConstant, sym->value);
+		else
+			printf("%s\n", sym->id);
+	}
+}
+
+void scope_print_all(struct scope *sc) {
+	while (sc) {
+		scope_print(sc);
+		sc = sc->parent;
+	}
 }

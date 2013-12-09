@@ -1,18 +1,40 @@
-#ifndef __TDS__
-#define __TDS__
+#ifndef SYMBOLS__
+#define SYMBOLS__
 
-	typedef struct tds {
-		char* id;
-		int isConstant;
-		char* value;
-		char* type;
-		int memPos;
-		struct tds* next;
-	} tds;
+enum scalar {
+	STYPE_BOOL,
+	STYPE_INT,
+	STYPE_CPLX,
+	STYPE_REAL
+};
 
-	tds* tds_put(tds **t, char *id, int isConstant);
-	tds* tds_lookup(tds **p, char* name);
-	void tds_clear(tds **t);
-	void tds_print(tds *t);
-	
+struct type {
+	int is_scalar;
+	enum scalar stype;
+	int size; /* Meaningless if is_scalar is set */
+};
+
+struct symbol {
+	struct symbol *next;
+	int memPos;
+	char *id;
+	struct type type;
+	int isConstant;
+	char *value; /* Must be NULL for non-constant symbol */
+};
+
+struct scope {
+	struct symbol *tds;
+	struct scope *parent;
+};
+
+struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value);
+struct scope *scope_create(struct scope *parent);
+struct scope *scope_add_symbol(struct scope *sc, struct symbol *sym);
+struct scope *scope_import(struct scope *sc, struct scope *sci);
+struct symbol *scope_lookup(struct scope *sc, char* name);
+void scope_free(struct scope *sc);
+void scope_print(struct scope *sc);
+void scope_print_all(struct scope *sc);
+
 #endif

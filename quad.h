@@ -45,5 +45,4 @@
 	void quad_complete(quad *t, char* value);
 	void mips_gen(quad **q, tds *t);
 	void mips_write(quad* t, tds* symbols, FILE* file);
-	
 #endif
