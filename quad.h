@@ -37,7 +37,7 @@ quad *quad_concat(quad *q1, quad *q2);
 quad *quad_take(quad **p);
 void quad_clear(quad **t);
 void quad_print(quad *t);
-void quad_complete(quad *t, char *value);
+void quad_complete(quad *t, long value);
 void mips_gen(quad **q);
 void mips_write(quad* t, FILE *file);
 

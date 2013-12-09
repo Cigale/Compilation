@@ -123,7 +123,7 @@ Declarations_List:
 	;
 
 Parameter:
-	TK_IDENT TK_IN Type {$$ = symbol_create($1, $3, FALSE, NULL);}
+	TK_IDENT TK_IN Type {$$ = symbol_create($1, $3, FALSE, 0);}
 	;
 
 Type:

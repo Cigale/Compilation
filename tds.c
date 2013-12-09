@@ -7,7 +7,7 @@ void scope_clear(struct scope *sc);
 
 int nbTmp = 0;
 
-struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value) {
+struct symbol *symbol_create(char *id, struct type t, int isConstant, long value) {
 	struct symbol *sym;
 
 	sym = malloc(sizeof(*sym));
@@ -17,16 +17,6 @@ struct symbol *symbol_create(char *id, struct type t, int isConstant, char *valu
 	}
 
 	memset(sym, 0, sizeof(*sym));
-
-	if (!isConstant && value != NULL) {
-		fprintf(stderr, "Only constants can have a value\n");
-		exit(EXIT_FAILURE);
-	}
-
-	if (isConstant && value == NULL) {
-		fprintf(stderr, "A constant must have a value\n");
-		exit(EXIT_FAILURE);
-	}
 
 	if (id == NULL) {
 		id = malloc(sizeof(char) * 14);

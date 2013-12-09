@@ -78,7 +78,7 @@ void quad_print(quad *t) {
 	}
 }
 
-void quad_complete(quad *t, char *value) {
+void quad_complete(quad *t, long value) {
 	t->res->value = value;
 }
 
