@@ -80,8 +80,13 @@ quad* quad_add(quad *t, quad* q) {
 }
 
 quad* quad_concat(quad* q1, quad* q2) {
+	if (q1 == NULL)
+		return q2;
+
 	q1->last->next = q2;
-	q1->last = q2->last;
+
+	if (q2 != NULL)
+		q1->last = q2->last;
 
 	return q1;
 }
