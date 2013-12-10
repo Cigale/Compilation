@@ -36,6 +36,7 @@ typedef struct quad {
 	struct quad *last;
 } quad;
 
+struct type quad_res_type(const struct type *type1, const struct type *type2, enum quad_type type);
 quad *quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *res, enum quad_type type);
 quad *quad_add(quad *t, quad *q);
 quad *quad_concat(quad *q1, quad *q2);

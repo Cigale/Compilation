@@ -6,6 +6,40 @@
 
 int next_quad = 0;
 
+struct type quad_res_type(const struct type *type1, const struct type *type2, enum quad_type type) {
+	switch (type) {
+		/* Unary operators */
+		case AFFEC:
+		case AFFEC_UNARY_MINUS:
+		case AFFEC_UNARY_NOT:
+			return *type1;
+
+		/* Biary operators */
+		case AFFEC_BINARY_PLUS:
+		case AFFEC_BINARY_MINUS:
+		case AFFEC_BINARY_MULT:
+		case AFFEC_BINARY_DIV:
+		case AFFEC_BINARY_OR:
+		case AFFEC_BINARY_AND:
+			/*
+			 * No automatic type converstion
+			 * both must be the same type
+			 */
+
+			if (!same_type(*type1, *type2)) {
+				fprintf(stderr, "Can't apply an operator between two distinct types\n");
+				exit(EXIT_FAILURE);
+			}
+
+			return *type1;
+
+		default:
+			fprintf(stderr, "No result type for this kind of quad\n");
+			exit(EXIT_FAILURE);
+	}
+}
+
+
 quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *res, enum quad_type type) {
 
 	quad *element = malloc(sizeof(quad));
@@ -47,6 +81,7 @@ quad* quad_add(quad *t, quad* q) {
 
 quad* quad_concat(quad* q1, quad* q2) {
 	q1->last->next = q2;
+	q1->last = q2->last;
 
 	return q1;
 }

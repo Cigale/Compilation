@@ -2,10 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tds.h"
+#include "constants.h"
 
 void scope_clear(struct scope *sc);
 
 int nbTmp = 0;
+
+int same_type(struct type t1, struct type t2) {
+	if (t1.is_scalar != t2.is_scalar)
+		return FALSE;
+
+	if (t1.stype != t2.stype)
+		return FALSE;
+
+	if (!t1.is_scalar && t1.size != t2.size)
+		return FALSE;
+
+	return TRUE;
+
+}
 
 struct symbol *symbol_create(char *id, struct type t, int isConstant, long value) {
 	struct symbol *sym;
