@@ -2,12 +2,33 @@
 #include <stdlib.h>
 #include <string.h>
 #include "tds.h"
+#include "constants.h"
+
+struct symbol *all_vars = NULL;
 
 void scope_clear(struct scope *sc);
 
 int nbTmp = 0;
 
-struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value) {
+int same_type(struct type t1, struct type t2) {
+	if (t1.is_scalar != t2.is_scalar)
+		return FALSE;
+
+	if (t1.stype != t2.stype)
+		return FALSE;
+
+	if (!t1.is_scalar && t1.size != t2.size)
+		return FALSE;
+
+	return TRUE;
+
+}
+
+struct symbol *get_all_symbols() {
+	return all_vars;
+}
+
+struct symbol *symbol_create(char *id, struct type t, int isConstant, long value) {
 	struct symbol *sym;
 
 	sym = malloc(sizeof(*sym));
@@ -17,16 +38,6 @@ struct symbol *symbol_create(char *id, struct type t, int isConstant, char *valu
 	}
 
 	memset(sym, 0, sizeof(*sym));
-
-	if (!isConstant && value != NULL) {
-		fprintf(stderr, "Only constants can have a value\n");
-		exit(EXIT_FAILURE);
-	}
-
-	if (isConstant && value == NULL) {
-		fprintf(stderr, "A constant must have a value\n");
-		exit(EXIT_FAILURE);
-	}
 
 	if (id == NULL) {
 		id = malloc(sizeof(char) * 14);
@@ -38,6 +49,13 @@ struct symbol *symbol_create(char *id, struct type t, int isConstant, char *valu
 	sym->type = t;
 	sym->isConstant = isConstant;
 	sym->value = value;
+	
+	if(all_vars == NULL) {
+		all_vars = sym;
+	} else {
+		sym->next = all_vars;
+		all_vars = sym;
+	}
 
 	return sym;
 }
@@ -114,7 +132,7 @@ void scope_print(struct scope *sc) {
 
 	for (sym = sc->tds; sym != NULL; sym = sym->next) {
 		if (sym->isConstant)
-			printf("%s = %s\n", sym->id, sym->value);
+			printf("%s = %d\n", sym->id, sym->value);
 		else
 			printf("%s\n", sym->id);
 	}

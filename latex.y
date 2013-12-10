@@ -1,6 +1,7 @@
 %{
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "tds.h"
 #include "quad.h"
 #include "constants.h"
@@ -14,53 +15,74 @@ int yyerror(char *s);
 %}
 
 %union {
-	struct data {
+	quad *algos;
+	struct {
 		struct scope *sc;
-		quad* code;
-		quad* truelist;
-		quad* falselist;
-	} data;
+		quad *code;
+	} algo;
+	struct {
+		quad *code;
+		quad *truelist;
+		quad *falselist;
+	} code_fragment;
 	struct scope *scope;
 	struct symbol *symbol;
 	struct type type;
 	enum scope_type scope_type;
+	enum scalar scalar;
 	char* id;
 	int intval;
 }
 
 %token <scope_type> TK_CONST TK_INPUT TK_OUTPUT TK_GLOBAL TK_LOCAL
 %token TK_BLK TK_ENDINST TK_LEFT TK_FOR TK_WHILE TK_IF TK_EIF TK_REPEAT
-%token TK_EMPTY TK_IN TK_TYPE TK_TO TK_MBOX
+%token TK_EMPTY TK_IN TK_TO TK_MBOX
 %token TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
 %token TK_BOOLOP
+%token <scalar> TK_TYPE
 %token <intval> TK_NUMBER
 %token <id> TK_IDENT
 
+%type <algos> Algos
+%type <algo> Algo
+%type <code_fragment> Code Instruction
+%type <code_fragment> Affectation While Repeat If Eif For Mbox
+%type <code_fragment> Expression ExpressionOr ExpressionAnd ExpressionRel
+%type <code_fragment> ExpressionAdd ExpressionMult ExpressionUnary
 %type <scope> Declarations Declarations_List
-%type <symbol> Parameter
+%type <symbol> Parameter ExpressionPrimary
 %type <type> Type
 /*%type <data> Expression*/
 
-%left '+' '-' TK_TIMES TK_DIV
-%right TK_LEFT
-
-%start Algos
+%start AllAlgos
 
 %%
 
+AllAlgos:
+	Algos {
+		printf("\nImpression des différents quads générés :\n");
+		quad_print($1);
+		printf("\nGénération de code...");
+		mips_gen(&$1, get_all_symbols());
+		printf("Done.\n");
+	}
+	;
+
 Algos:
-	Algos Algo
-	| {printf("Done\n");}
+	Algos Algo {
+		$$ = quad_concat($1, $2.code);
+		cur_scope = NULL;
+		/* TODO libérer les scopes et les quad */
+	}
+	| {
+		$$ = NULL;
+	}
 	;
 
 Algo:
 	Const Input Output Global Local Blankline Code {
-		/* TODO: Faire un truc plus intelligent pour garder les globales */
-		while (cur_scope != NULL) {
-			struct scope *sc = cur_scope->parent;
-			scope_free(cur_scope);
-			cur_scope = sc;
-		}
+		$$.code = $7.code;
+		$$.sc = cur_scope;
 	}
 	;
 
@@ -123,17 +145,17 @@ Declarations_List:
 	;
 
 Parameter:
-	TK_IDENT TK_IN Type {$$ = symbol_create($1, $3, FALSE, NULL);}
+	TK_IDENT TK_IN Type {$$ = symbol_create($1, $3, FALSE, 0);}
 	;
 
 Type:
 	TK_TYPE {
 		$$.is_scalar = TRUE;
-		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+		$$.stype = $1;
 	}
 	| TK_TYPE '^' '{' TK_NUMBER '}' {
 		$$.is_scalar = FALSE;
-		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+		$$.stype = $1;
 		$$.size = $4;
 	}
 	;
@@ -143,95 +165,249 @@ TableValue:
 	;
 
 Code:
-	Code Instruction
-	|
+	Code Instruction {
+		$$.code = quad_concat($1.code, $2.code);
+	}
+	| {
+		$$.code = NULL;
+	}
 	;
 
 Instruction:
-	Affectation TK_ENDINST {printf("Affectation found\n");}
-	| While {printf("While found\n");}
-	| Repeat {printf("Repeat found\n");}
-	| If {printf("If found\n");}
-	| Eif {printf("eIf found\n");}
-	| For {printf("For found\n");}
-	| Mbox TK_ENDINST {printf("Mbox found\n");}
+	Affectation TK_ENDINST {
+		printf("Affectation found\n");
+		$$ = $1;
+	}
+	| While {
+		printf("While found\n");
+		$$ = $1;
+	}
+	| Repeat {
+		printf("Repeat found\n");
+		$$ = $1;
+	}
+	| If {
+		printf("If found\n");
+		$$ = $1;
+	}
+	| Eif {
+		printf("eIf found\n");
+		$$ = $1;
+	}
+	| For {
+		printf("For found\n");
+		$$ = $1;
+	}
+	| Mbox TK_ENDINST {
+		printf("Mbox found\n");
+		$$ = $1;
+	}
 	;
 
 Affectation:
-	'$' TK_IDENT TableValue TK_LEFT Expression '$'
-	| '$' TK_IDENT TK_LEFT Expression '$'
+	'$' TK_IDENT TableValue TK_LEFT Expression '$' {
+		/* TODO */
+		$$ = $5;
+	}
+	| '$' TK_IDENT TK_LEFT Expression '$' {
+		struct type t = quad_res_type(&$4.code->res->type, NULL, AFFEC);
+		struct symbol *sym = scope_lookup(cur_scope, $2);
+		if (!same_type(t, sym->type)) {
+			fprintf(stderr, "Can't assign a variable with a different type\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_put($4.code, $4.code->res, NULL, sym, AFFEC);
+	}
 	;
 
 While:
-	TK_WHILE '{' '$' Expression '$' '}' '{' Code '}'
+	TK_WHILE '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 Repeat:
-	TK_REPEAT '{' '$' Expression '$' '}' '{' Code '}'
+	TK_REPEAT '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 If:
-	TK_IF '{' '$' Expression '$' '}' '{' Code '}'
+	TK_IF '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 Eif:
-	TK_EIF '{' '$' Expression '$' '}' '{' Code '}' '{' Code '}'
+	TK_EIF '{' '$' Expression '$' '}' '{' Code '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 For:
-	TK_FOR '{' Affectation TK_TO '$' Expression '$' '}' '{' Code '}'
+	TK_FOR '{' Affectation TK_TO '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $6;
+	}
 	;
 
 Mbox:
-	TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}'
-	| '$' TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' '$'
+	TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' {
+		/* TODO */
+		$$ = $6;
+	}
+	| '$' TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' '$' {
+		/* TODO */
+		$$ = $7;
+	}
 	;
 
 Expression:
-	ExpressionOr
+	ExpressionOr {
+		/* TODO */
+		$$ = $1;
+	}
 	;
 
 ExpressionOr:
-	ExpressionOr TK_OR ExpressionAnd
-	| ExpressionAnd
+	ExpressionOr TK_OR ExpressionAnd {
+		/* TODO */
+	}
+	| ExpressionAnd {
+		$$ = $1;
+	}
 	;
 
 ExpressionAnd:
-	ExpressionAnd TK_AND ExpressionRel
-	| ExpressionRel
+	ExpressionAnd TK_AND ExpressionRel {
+		/* TODO */
+	}
+	| ExpressionRel {
+		$$ = $1;
+	}
 	;
 
 ExpressionRel:
-	ExpressionAdd TK_BOOLOP ExpressionAdd
-	| ExpressionAdd
+	ExpressionAdd TK_BOOLOP ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd {
+		$$ = $1;
+	}
 	;
 
 ExpressionAdd:
-	ExpressionAdd '+' ExpressionMult
-	| ExpressionAdd '-' ExpressionMult
-	| ExpressionMult
+	ExpressionAdd '+' ExpressionMult {
+		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_PLUS);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_PLUS);
+	}
+	| ExpressionAdd '-' ExpressionMult {
+		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_MINUS);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_MINUS);
+	}
+	| ExpressionMult {
+		$$ = $1;
+	}
 	;
 
 ExpressionMult:
-	ExpressionMult TK_TIMES ExpressionUnary
-	| ExpressionMult TK_DIV ExpressionUnary
-	| ExpressionUnary
+	ExpressionMult TK_TIMES ExpressionUnary {
+		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_MULT);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_MULT);
+	}
+	| ExpressionMult TK_DIV ExpressionUnary {
+		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_DIV);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_DIV);
+	}
+	| ExpressionUnary {
+		$$ = $1;
+	}
 	;
 
 ExpressionUnary:
-	TK_NOT ExpressionUnary
-	| '-' ExpressionUnary
-	| ExpressionPrimary
+	TK_NOT ExpressionUnary {
+		struct type t = quad_res_type(&$2.code->res->type, NULL, AFFEC_UNARY_NOT);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_put($2.code, $2.code->res, NULL, sym, AFFEC_UNARY_NOT);
+	}
+	| '-' ExpressionUnary {
+		struct type t = quad_res_type(&$2.code->res->type, NULL, AFFEC_UNARY_MINUS);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_put($2.code, $2.code->res, NULL, sym, AFFEC_UNARY_MINUS);
+	}
+	| '(' Expression ')' {
+		$$ = $2;
+	}
+	| Mbox {
+		/* TODO replace that dummy code */
+		printf("Unsupported Mbox\n");
+		struct type t;
+		struct symbol *sym;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_INT;
+		t.size = 0;
+		sym = symbol_create(NULL, t, TRUE, 0);
+		$$.code = quad_put(NULL, sym, NULL, sym, AFFEC);
+	}
+	| TK_IDENT TableValue {
+		/* TODO replace that dummy code */
+		printf("Unsupported TableValue\n");
+		struct type t;
+		struct symbol *sym;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_INT;
+		t.size = 0;
+		sym = symbol_create(NULL, t, TRUE, 0);
+		$$.code = quad_put(NULL, sym, NULL, sym, AFFEC);
+	}
+	| ExpressionPrimary {
+		struct type t = quad_res_type(&$1->type, NULL, AFFEC);
+		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+		$$.code = quad_put(NULL, $1, NULL, sym, AFFEC);
+	}
 	;
 
 ExpressionPrimary:
-	TK_NUMBER
-	| TK_IDENT
-	| TK_IDENT TableValue
-	| TK_TRUE
-	| TK_FALSE
-	| Mbox
-	| '(' Expression ')'
+	TK_NUMBER {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_INT;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, $1);
+	}
+	| TK_IDENT {
+		$$ = scope_lookup(cur_scope, $1);
+		if ($$ == NULL) {
+			fprintf(stderr, "Symbol %s undefined\n", $1);
+			exit(EXIT_FAILURE);
+		}
+	}
+	| TK_TRUE {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_BOOL;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, TRUE);
+	}
+	| TK_FALSE {
+		struct type t;
+		t.is_scalar = TRUE;
+		t.stype = STYPE_BOOL;
+		t.size = 0;
+		$$ = symbol_create(NULL, t, TRUE, TRUE);
+	}
 	;
 
 %%

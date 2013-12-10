@@ -1,0 +1,54 @@
+\documentclass[a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+\usepackage{fullpage}
+\usepackage[vlined,ruled]{algorithm2e}
+\usepackage{amssymb}
+\usepackage{amsmath,alltt}
+
+\newenvironment{algo}[1]{%
+\vspace{1cm}
+\renewcommand{\algorithmcfname}{Algorithm}
+\begin{algorithm}[H]
+\label{#1}
+\caption{#1}
+\SetKwInOut{Constant}{Constant}
+\SetKwInOut{Input}{Input}
+\SetKwInOut{Output}{Output}
+\SetKwInOut{Global}{Global}
+\SetKwInOut{Local}{Local}
+}{%
+\end{algorithm}
+\vspace{1cm}
+}
+
+
+\newcommand{\true}{\mbox{\it true}}
+\newcommand{\false}{\mbox{\it false}}
+\newcommand{\Boolean}{\{\true,\false\}}
+\newcommand{\Integer}{\mathbb{Z}}
+\newcommand{\Complex}{\mathbb{C}}
+\newcommand{\Real}{\mathbb{R}}
+
+\begin{document}
+\title{Projet de compilation}
+\maketitle
+
+Seul les algorithmes sont pris en compte pour la compilation. Tout le
+reste du document \LaTeX \; est ignor\'e. Le point d'entr\'ee est
+l'algorithme \textbf{main}.
+
+\begin{algo}{main}
+\Input{$\emptyset$}
+\Output{$\emptyset$}
+\Global{$\emptyset$}
+\Local{$accu \in \Integer$}
+\BlankLine
+$accu \leftarrow 1 + 5 \times -6$ \;
+$accu \leftarrow accu \times -12$ \; 
+\end{algo}
+
+
+
+\end{document}
