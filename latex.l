@@ -21,7 +21,10 @@ cmdLocal        "\\Local"
 cmdBlk          "\\BlankLine"
 cmdEmpty        "\\emptyset"
 cmdIn           "\\in"
-cmdType         "\\Integer"|"\\Real"|"\\Complex"|"\\Boolean"
+cmdIntegerType	"\\Integer"
+cmdRealType	"\\Real"
+cmdComplexType	"\\Complex"
+cmdBooleanType	"\\Boolean"
 cmdLeft         "\\leftarrow"
 cmdWhile        "\\While"
 cmdRepeat       "\\Repeat"
@@ -60,7 +63,10 @@ divOp           "\\div"
 	{cmdEmpty}          return TK_EMPTY;
 	{cmdLeft}           return TK_LEFT;
 	{cmdIn}             return TK_IN;
-	{cmdType}           return TK_TYPE;
+	{cmdIntegerType}    yylval.scalar = STYPE_INT; return TK_TYPE;
+	{cmdRealType}       yylval.scalar = STYPE_REAL; return TK_TYPE;
+	{cmdComplexType}    yylval.scalar = STYPE_CPLX; return TK_TYPE;
+	{cmdBooleanType}    yylval.scalar = STYPE_BOOL; return TK_TYPE;
 	{cmdWhile}          return TK_WHILE;
 	{cmdRepeat}         return TK_REPEAT;
 	{cmdFor}            return TK_FOR;

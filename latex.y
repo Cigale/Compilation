@@ -25,15 +25,17 @@ int yyerror(char *s);
 	struct symbol *symbol;
 	struct type type;
 	enum scope_type scope_type;
+	enum scalar scalar;
 	char* id;
 	int intval;
 }
 
 %token <scope_type> TK_CONST TK_INPUT TK_OUTPUT TK_GLOBAL TK_LOCAL
 %token TK_BLK TK_ENDINST TK_LEFT TK_FOR TK_WHILE TK_IF TK_EIF TK_REPEAT
-%token TK_EMPTY TK_IN TK_TYPE TK_TO TK_MBOX
+%token TK_EMPTY TK_IN TK_TO TK_MBOX
 %token TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
 %token TK_BOOLOP
+%token <scalar> TK_TYPE
 %token <intval> TK_NUMBER
 %token <id> TK_IDENT
 
@@ -127,11 +129,11 @@ Parameter:
 Type:
 	TK_TYPE {
 		$$.is_scalar = TRUE;
-		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+		$$.stype = $1;
 	}
 	| TK_TYPE '^' '{' TK_NUMBER '}' {
 		$$.is_scalar = FALSE;
-		$$.stype = STYPE_INT; /* TODO: FIXME calculer la valeur à partir de $1 */
+		$$.stype = $1;
 		$$.size = $4;
 	}
 	;
