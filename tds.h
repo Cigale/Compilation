@@ -16,11 +16,10 @@ struct type {
 
 struct symbol {
 	struct symbol *next;
-	int memPos;
 	char *id;
 	struct type type;
 	int isConstant;
-	char *value; /* Must be NULL for non-constant symbol */
+	long value; /* The value is only meaningful when isConstant is true */
 };
 
 struct scope {
@@ -28,7 +27,8 @@ struct scope {
 	struct scope *parent;
 };
 
-struct symbol *symbol_create(char *id, struct type t, int isConstant, char *value);
+int same_type(struct type t1, struct type t2);
+struct symbol *symbol_create(char *id, struct type t, int isConstant, long value);
 struct scope *scope_create(struct scope *parent);
 struct scope *scope_add_symbol(struct scope *sc, struct symbol *sym);
 struct scope *scope_import(struct scope *sc, struct scope *sci);
