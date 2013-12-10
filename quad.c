@@ -170,63 +170,104 @@ void mips_write(quad *t, FILE *file) {
 			fprintf(file, "\tlw $a0, %s\n\tsw $a0, %s\n\n", t->operande1->id, t->res->id);
     	break;
 		case AFFEC_UNARY_MINUS:
-			fprintf(file, "\tneg %s, %s\n", t->res->id, t->operande1->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tneg $a0, $a0\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_UNARY_NOT:
-			fprintf(file, "\tnot %s, %s\n", t->res->id, t->operande1->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tnot $a0 $a0\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_PLUS:
-			fprintf(file, "\tadd %s, %s, %s\n", t->res->id, t->operande1->id, t->operande2->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tadd $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_MINUS:
-			fprintf(file, "\tsub %s, %s, %s\n", t->res->id, t->operande1->id, t->operande2->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tsub $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_MULT:
-			fprintf(file, "\tmult %s, %s, %s\n", t->res->id, t->operande1->id, t->operande2->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tmult $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_DIV:
-			fprintf(file, "\tdiv %s, %s, %s\n", t->res->id, t->operande1->id, t->operande2->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tdiv $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_AND:
-			fprintf(file, "\tand %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tand $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case AFFEC_BINARY_OR:
-			fprintf(file, "\tor %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tor $a0, $a0, $a1\n");
+			fprintf(file, "\tsw $a0 %s\n", t->res->id);
 			break;
 
 		case BRANCHMENT_UNCOND:
-			fprintf(file, "\tj %s\n", t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->res->id);
+			fprintf(file, "\tj $a0\n");
 			break;
 
 		case BRANCHMENT_COND_EQ:
-			fprintf(file, "\tbeq %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tbeq $a0, $a1, $a2\n");
 			break;
 
 		case BRANCHMENT_COND_NEQ:
-			fprintf(file, "\tbne %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tbne $a0, $a1, $a2\n");
 			break;
 
 		case BRANCHMENT_COND_LT:
-			fprintf(file, "\tblt %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tblt $a0, $a1, $a2\n");
 			break;
 
 		case BRANCHMENT_COND_LTEQ:
-			fprintf(file, "\tble %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tble $a0, $a1, $a2\n");
 			break;
 
 		case BRANCHMENT_COND_GT:
-			fprintf(file, "\tbgt %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tbgt $a0, $a1, $a2\n");
 			break;
 
 		case BRANCHMENT_COND_GTEQ:
-			fprintf(file, "\tbge %s, %s, %s\n", t->operande1->id, t->operande2->id, t->res->id);
+			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
+			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
+			fprintf(file, "\tlw $a2 %s\n", t->res->id);
+			fprintf(file, "\tbge $a0, $a1, $a2\n");
 			break;
 
 		case PROC_PARAM:
