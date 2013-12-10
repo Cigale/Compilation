@@ -15,11 +15,15 @@ int yyerror(char *s);
 %}
 
 %union {
-	struct code_fragment {
+	quad *algos;
+	struct {
 		struct scope *sc;
-		quad* code;
-		quad* truelist;
-		quad* falselist;
+		quad *code;
+	} algo;
+	struct {
+		quad *code;
+		quad *truelist;
+		quad *falselist;
 	} code_fragment;
 	struct scope *scope;
 	struct symbol *symbol;
@@ -39,7 +43,10 @@ int yyerror(char *s);
 %token <intval> TK_NUMBER
 %token <id> TK_IDENT
 
-%type <code_fragment> Affectation
+%type <algos> Algos
+%type <algo> Algo
+%type <code_fragment> Code Instruction
+%type <code_fragment> Affectation While Repeat If Eif For Mbox
 %type <code_fragment> Expression ExpressionOr ExpressionAnd ExpressionRel
 %type <code_fragment> ExpressionAdd ExpressionMult ExpressionUnary
 %type <scope> Declarations Declarations_List
@@ -47,23 +54,31 @@ int yyerror(char *s);
 %type <type> Type
 /*%type <data> Expression*/
 
-%start Algos
+%start AllAlgos
 
 %%
 
+AllAlgos:
+	Algos {
+		mips_gen(&$1, NULL);
+	}
+	;
+
 Algos:
-	Algos Algo
-	| {printf("Done\n");}
+	Algos Algo {
+		$$ = quad_concat($1, $2.code);
+		cur_scope = NULL;
+		/* TODO libérer les scopes et les quad */
+	}
+	| {
+		$$ = NULL;
+	}
 	;
 
 Algo:
 	Const Input Output Global Local Blankline Code {
-		/* TODO: Faire un truc plus intelligent pour garder les globales */
-		while (cur_scope != NULL) {
-			struct scope *sc = cur_scope->parent;
-			scope_free(cur_scope);
-			cur_scope = sc;
-		}
+		$$.code = $7.code;
+		$$.sc = cur_scope;
 	}
 	;
 
@@ -146,18 +161,43 @@ TableValue:
 	;
 
 Code:
-	Code Instruction
-	|
+	Code Instruction {
+		$$.code = quad_concat($1.code, $2.code);
+	}
+	| {
+		$$.code = NULL;
+	}
 	;
 
 Instruction:
-	Affectation TK_ENDINST {printf("Affectation found\n");}
-	| While {printf("While found\n");}
-	| Repeat {printf("Repeat found\n");}
-	| If {printf("If found\n");}
-	| Eif {printf("eIf found\n");}
-	| For {printf("For found\n");}
-	| Mbox TK_ENDINST {printf("Mbox found\n");}
+	Affectation TK_ENDINST {
+		printf("Affectation found\n");
+		$$ = $1;
+	}
+	| While {
+		printf("While found\n");
+		$$ = $1;
+	}
+	| Repeat {
+		printf("Repeat found\n");
+		$$ = $1;
+	}
+	| If {
+		printf("If found\n");
+		$$ = $1;
+	}
+	| Eif {
+		printf("eIf found\n");
+		$$ = $1;
+	}
+	| For {
+		printf("For found\n");
+		$$ = $1;
+	}
+	| Mbox TK_ENDINST {
+		printf("Mbox found\n");
+		$$ = $1;
+	}
 	;
 
 Affectation:
@@ -177,32 +217,54 @@ Affectation:
 	;
 
 While:
-	TK_WHILE '{' '$' Expression '$' '}' '{' Code '}'
+	TK_WHILE '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 Repeat:
-	TK_REPEAT '{' '$' Expression '$' '}' '{' Code '}'
+	TK_REPEAT '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 If:
-	TK_IF '{' '$' Expression '$' '}' '{' Code '}'
+	TK_IF '{' '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 Eif:
-	TK_EIF '{' '$' Expression '$' '}' '{' Code '}' '{' Code '}'
+	TK_EIF '{' '$' Expression '$' '}' '{' Code '}' '{' Code '}' {
+		/* TODO */
+		$$ = $8;
+	}
 	;
 
 For:
-	TK_FOR '{' Affectation TK_TO '$' Expression '$' '}' '{' Code '}'
+	TK_FOR '{' Affectation TK_TO '$' Expression '$' '}' '{' Code '}' {
+		/* TODO */
+		$$ = $6;
+	}
 	;
 
 Mbox:
-	TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}'
-	| '$' TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' '$'
+	TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' {
+		/* TODO */
+		$$ = $6;
+	}
+	| '$' TK_MBOX '{' TK_IDENT '(' '$' Expression '$' ')' '}' '$' {
+		/* TODO */
+		$$ = $7;
+	}
 	;
 
 Expression:
 	ExpressionOr {
+		/* TODO */
 		$$ = $1;
 	}
 	;

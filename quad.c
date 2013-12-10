@@ -157,8 +157,6 @@ void mips_write(quad *t, FILE *file) {
 
 	int proc_param_nb = 0;
 
-	printf("Quad %d %s\n", t->quad_type, t->res->id);
-
 	switch(t->quad_type) {
 		case AFFEC_UNARY_MINUS:
 			fprintf(file, "neg %d, %d\n", t->res->memPos, t->operande1->memPos);
