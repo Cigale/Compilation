@@ -157,86 +157,88 @@ void mips_write(quad *t, FILE *file) {
 
 	int proc_param_nb = 0;
 
+	printf("Quad %d %s\n", t->quad_type, t->res->id);
+
 	switch(t->quad_type) {
 		case AFFEC_UNARY_MINUS:
-			fprintf(file, "neg %d, %d", t->res->memPos, t->operande1->memPos);
+			fprintf(file, "neg %d, %d\n", t->res->memPos, t->operande1->memPos);
 			break;
 
 		case AFFEC_UNARY_NOT:
-			fprintf(file, "not %d, %d", t->res->memPos, t->operande1->memPos);
+			fprintf(file, "not %d, %d\n", t->res->memPos, t->operande1->memPos);
 			break;
 
 		case AFFEC_BINARY_PLUS:
-			fprintf(file, "add %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
+			fprintf(file, "add %d, %d, %d\n", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
 
 		case AFFEC_BINARY_MINUS:
-			fprintf(file, "sub %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
+			fprintf(file, "sub %d, %d, %d\n", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
 
 		case AFFEC_BINARY_MULT:
-			fprintf(file, "mult %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
+			fprintf(file, "mult %d, %d, %d\n", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
 
 		case AFFEC_BINARY_DIV:
-			fprintf(file, "div %d, %d, %d", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
+			fprintf(file, "div %d, %d, %d\n", t->res->memPos, t->operande1->memPos, t->operande2->memPos);
 			break;
 
 		case AFFEC_BINARY_AND:
-			fprintf(file, "and %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "and %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case AFFEC_BINARY_OR:
-			fprintf(file, "or %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "or %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_UNCOND:
-			fprintf(file, "j %d", t->res->memPos);
+			fprintf(file, "j %d\n", t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_EQ:
-			fprintf(file, "beq %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "beq %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_NEQ:
-			fprintf(file, "bne %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "bne %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_LT:
-			fprintf(file, "blt %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "blt %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_LTEQ:
-			fprintf(file, "ble %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "ble %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_GT:
-			fprintf(file, "bgt %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "bgt %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case BRANCHMENT_COND_GTEQ:
-			fprintf(file, "bge %d, %d, %d", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
+			fprintf(file, "bge %d, %d, %d\n", t->operande1->memPos, t->operande2->memPos, t->res->memPos);
 			break;
 
 		case PROC_PARAM:
 			switch(proc_param_nb) {
 				case 0:
-					fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+					fprintf(file, "lw $a0 (%d%%sp )\n", t->res->memPos);
 					proc_param_nb++;
 					break;
 
 				case 1:
-					fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+					fprintf(file, "lw $a0 (%d%%sp )\n", t->res->memPos);
 					proc_param_nb++;
 					break;
 
 				case 2:
-					fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+					fprintf(file, "lw $a0 (%d%%sp )\n", t->res->memPos);
 					proc_param_nb++;
 					break;
 
 				case 3:
-					fprintf(file, "lw $a0 (%d%%sp )", t->res->memPos);
+					fprintf(file, "lw $a0 (%d%%sp )\n", t->res->memPos);
 					proc_param_nb++;
 					break;
 
@@ -247,7 +249,7 @@ void mips_write(quad *t, FILE *file) {
 			break;
 
 		case PROC_CALL:
-			fprintf(file, "jal %d", t->res->memPos);
+			fprintf(file, "jal %d\n", t->res->memPos);
 			proc_param_nb = 0;
 			break;
 
