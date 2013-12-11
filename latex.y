@@ -9,6 +9,7 @@
 FILE *yyin;
 
 struct scope *cur_scope = NULL;
+struct scope *last_scope = NULL;
 
 int yyerror(char *s);
 

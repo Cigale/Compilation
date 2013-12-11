@@ -27,7 +27,6 @@ int same_type(struct type t1, struct type t2) {
 struct symbol *get_all_symbols() {
 	return all_vars;
 }
-
 struct symbol *symbol_create(char *id, struct type t, int isConstant, long value) {
 	struct symbol *sym;
 
