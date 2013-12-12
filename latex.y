@@ -211,13 +211,14 @@ Affectation:
 		$$ = $5;
 	}
 	| '$' TK_IDENT TK_LEFT Expression '$' {
-		struct type t = quad_res_type(&$4.code->res->type, NULL, AFFEC);
+		struct quad *ql = quad_last($4.code);
+		struct type t = quad_res_type(&ql->res->type, NULL, AFFEC);
 		struct symbol *sym = scope_lookup(cur_scope, $2);
 		if (!same_type(t, sym->type)) {
 			fprintf(stderr, "Can't assign a variable with a different type\n");
 			exit(EXIT_FAILURE);
 		}
-		$$.code = quad_put($4.code, $4.code->res, NULL, sym, AFFEC);
+		$$.code = quad_put($4.code, ql->res, NULL, sym, AFFEC);
 	}
 	;
 
@@ -303,16 +304,20 @@ ExpressionRel:
 
 ExpressionAdd:
 	ExpressionAdd '+' ExpressionMult {
-		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_PLUS);
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		struct type t = quad_res_type(&ql1->res->type, &ql2->res->type, AFFEC_BINARY_PLUS);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
 		$$.code = quad_concat($1.code, $3.code);
-		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_PLUS);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, sym, AFFEC_BINARY_PLUS);
 	}
 	| ExpressionAdd '-' ExpressionMult {
-		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_MINUS);
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		struct type t = quad_res_type(&ql1->res->type, &ql2->res->type, AFFEC_BINARY_MINUS);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
 		$$.code = quad_concat($1.code, $3.code);
-		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_MINUS);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, sym, AFFEC_BINARY_MINUS);
 	}
 	| ExpressionMult {
 		$$ = $1;
@@ -321,16 +326,20 @@ ExpressionAdd:
 
 ExpressionMult:
 	ExpressionMult TK_TIMES ExpressionUnary {
-		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_MULT);
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		struct type t = quad_res_type(&ql1->res->type, &ql2->res->type, AFFEC_BINARY_MULT);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
 		$$.code = quad_concat($1.code, $3.code);
-		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_MULT);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, sym, AFFEC_BINARY_MULT);
 	}
 	| ExpressionMult TK_DIV ExpressionUnary {
-		struct type t = quad_res_type(&$1.code->res->type, &$3.code->res->type, AFFEC_BINARY_DIV);
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		struct type t = quad_res_type(&ql1->res->type, &ql2->res->type, AFFEC_BINARY_DIV);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
 		$$.code = quad_concat($1.code, $3.code);
-		$$.code = quad_put($$.code, $1.code->res, $3.code->res, sym, AFFEC_BINARY_DIV);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, sym, AFFEC_BINARY_DIV);
 	}
 	| ExpressionUnary {
 		$$ = $1;
@@ -339,14 +348,16 @@ ExpressionMult:
 
 ExpressionUnary:
 	TK_NOT ExpressionUnary {
-		struct type t = quad_res_type(&$2.code->res->type, NULL, AFFEC_UNARY_NOT);
+		struct quad *ql = quad_last($2.code);
+		struct type t = quad_res_type(&ql->res->type, NULL, AFFEC_UNARY_NOT);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
-		$$.code = quad_put($2.code, $2.code->res, NULL, sym, AFFEC_UNARY_NOT);
+		$$.code = quad_put($2.code, ql->res, NULL, sym, AFFEC_UNARY_NOT);
 	}
 	| '-' ExpressionUnary {
-		struct type t = quad_res_type(&$2.code->res->type, NULL, AFFEC_UNARY_MINUS);
+		struct quad *ql = quad_last($2.code);
+		struct type t = quad_res_type(&ql->res->type, NULL, AFFEC_UNARY_MINUS);
 		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
-		$$.code = quad_put($2.code, $2.code->res, NULL, sym, AFFEC_UNARY_MINUS);
+		$$.code = quad_put($2.code, ql->res, NULL, sym, AFFEC_UNARY_MINUS);
 	}
 	| '(' Expression ')' {
 		$$ = $2;
