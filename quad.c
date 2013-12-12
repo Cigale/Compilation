@@ -91,6 +91,10 @@ quad* quad_concat(quad* q1, quad* q2) {
 	return q1;
 }
 
+quad *quad_last(quad *q) {
+	return q->last;
+}
+
 quad* quad_take(quad **p) {
 	quad *res;
 	quad *tmp;
