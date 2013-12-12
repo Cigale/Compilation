@@ -50,7 +50,8 @@ divOp           "\\div"
 		printf("Beginning of algo %s\n", yytext);
 		BEGIN(ALGO);
 	}
-	(.|\n)                     {}
+	"%".*"\n"?          {}
+	(.|\n)              {}
 }
 
 <ALGO>{
@@ -99,5 +100,6 @@ divOp           "\\div"
 	")"                 return yytext[0];
 	"}"                 return yytext[0];
 	"_"                 return yytext[0];
+	"%".*"\n"?          {}
 	{space}             {}
 }
