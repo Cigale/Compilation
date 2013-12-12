@@ -45,6 +45,7 @@ void quad_clear(quad **t);
 void quad_print(quad *t);
 void quad_complete(quad *t, long value);
 void mips_gen(quad **q, struct symbol *t);
+void mips_vars(struct symbol* s, FILE* f);
 void mips_write(quad* t, FILE *file);
 
 #endif

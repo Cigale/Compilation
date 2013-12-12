@@ -9,6 +9,7 @@
 FILE *yyin;
 
 struct scope *cur_scope = NULL;
+struct scope *last_scope = NULL;
 
 int yyerror(char *s);
 
@@ -60,7 +61,11 @@ int yyerror(char *s);
 
 AllAlgos:
 	Algos {
-		mips_gen(&$1, NULL);
+		printf("\nImpression des différents quads générés :\n");
+		quad_print($1);
+		printf("\nGénération de code...");
+		mips_gen(&$1, get_all_symbols());
+		printf("Done.\n");
 	}
 	;
 

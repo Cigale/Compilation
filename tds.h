@@ -16,7 +16,6 @@ struct type {
 
 struct symbol {
 	struct symbol *next;
-	int memPos;
 	char *id;
 	struct type type;
 	int isConstant;
@@ -28,6 +27,7 @@ struct scope {
 	struct scope *parent;
 };
 
+struct symbol *get_all_symbols();
 int same_type(struct type t1, struct type t2);
 struct symbol *symbol_create(char *id, struct type t, int isConstant, long value);
 struct scope *scope_create(struct scope *parent);
