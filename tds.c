@@ -49,7 +49,7 @@ struct symbol *symbol_create(char *id, struct type t, int isConstant, long value
 	sym->type = t;
 	sym->isConstant = isConstant;
 	sym->value = value;
-	
+
 	if(all_vars == NULL) {
 		all_vars = sym;
 	} else {

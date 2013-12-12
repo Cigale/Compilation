@@ -114,7 +114,7 @@ void quad_clear(quad **t) {
 void quad_print(quad *t) {
 	while(t) {
 		printf("Label : OP %d\t",t->quad_type);
-		
+
 		if(t->operande1 != NULL) {
 			printf("OPERANDE %s\t", t->operande1->id);
 		} else {
@@ -125,17 +125,17 @@ void quad_print(quad *t) {
 		} else {
 			printf("OPERANDE \t");
 		}
-		if(t->res != NULL) {	
+		if(t->res != NULL) {
 			printf("RES %s\t", t->res->id);
 		} else {
 			printf("RES \t");
 		}
-		
+
 		printf("\n");
-		
+
 		t = t->next;
 	}
-	
+
 	printf("\n");
 }
 
@@ -174,12 +174,12 @@ void mips_vars(struct symbol* s, FILE* f) {
 
 	for (sym = s; sym != NULL; sym = sym->next) {
 		if (sym->type.stype == STYPE_INT) {
-	        fprintf(f, "%s:\t.word %d\n", sym->id, (int)sym->value);
-	    } else if (sym->type.stype == STYPE_REAL) {
-	        fprintf(f, "%s:\t.double %f\n", sym->id, sym->value);
-	    } else if (sym->type.stype == STYPE_BOOL) {
-	        fprintf(f, "%s:\t.word %d\n", sym->id, (int)sym->value);
-	    }
+			fprintf(f, "%s:\t.word %d\n", sym->id, (int)sym->value);
+		} else if (sym->type.stype == STYPE_REAL) {
+			fprintf(f, "%s:\t.double %f\n", sym->id, sym->value);
+		} else if (sym->type.stype == STYPE_BOOL) {
+			fprintf(f, "%s:\t.word %d\n", sym->id, (int)sym->value);
+		}
 	}
 }
 
