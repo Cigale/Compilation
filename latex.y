@@ -240,14 +240,48 @@ Affectation:
 		$$ = $5;
 	}
 	| '$' TK_IDENT TK_LEFT Expression '$' {
-		struct quad *ql = quad_last($4.code);
-		struct type t = quad_res_type(&ql->res->type, NULL, AFFEC);
 		struct symbol *sym = scope_lookup(cur_scope, $2);
-		if (!same_type(t, sym->type)) {
-			fprintf(stderr, "Can't assign a variable with a different type\n");
-			exit(EXIT_FAILURE);
+
+		if ($4.truejump == NULL && $4.falsejump == NULL) {
+			/* Normal assignment (Integer, Real) */
+			struct quad *ql = quad_last($4.code);
+			struct type t = quad_res_type(&ql->res->type, NULL, AFFEC);
+			if (!same_type(t, sym->type)) {
+				fprintf(stderr, "Can't assign a variable with a different type\n");
+				exit(EXIT_FAILURE);
+			}
+			$$.code = quad_put($4.code, ql->res, NULL, sym, AFFEC);
+		} else {
+			/*
+			 * Boolean assignment.
+			 * There should always be a truejump AND a falsejump as
+			 * it is implemented like :
+			 * if (cond) a = 1 else a = 0
+			 */
+			struct symbol *symtrue, *symfalse;
+			struct type t;
+			t.is_scalar = TRUE;
+			t.stype = STYPE_BOOL;
+			t.size = 0;
+
+			symtrue = symbol_create(NULL, t, TRUE, TRUE);
+			symfalse = symbol_create(NULL, t, TRUE, FALSE);
+
+			/* If cond is true, we'll jump on the assigment to 1 */
+			$$.code = quad_put($4.code, symtrue, NULL, sym, AFFEC);
+			$4.truejump->res = quad_get_label(quad_last($$.code));
+
+			/* Don't execute the second assigment below. We need to
+			 * jump to the instruction just below the end of the
+			 * if. */
+			$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+			$$.truejump = quad_last($$.code);
+			$$.falsejump = quad_last($$.code);
+
+			/* If cond is false, we'll jump on the assigment to 0 */
+			$$.code = quad_put($$.code, symfalse, NULL, sym, AFFEC);
+			$4.falsejump->res = quad_get_label(quad_last($$.code));
 		}
-		$$.code = quad_put($4.code, ql->res, NULL, sym, AFFEC);
 	}
 	;
 
