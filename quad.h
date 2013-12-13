@@ -4,6 +4,7 @@
 #include "tds.h"
 
 enum quad_type {
+	NOP,
 	AFFEC,
 	AFFEC_UNARY_MINUS,
 	AFFEC_UNARY_NOT,

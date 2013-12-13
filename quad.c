@@ -213,6 +213,10 @@ void mips_write(quad *t, FILE *file) {
 		fprintf(file, "%s:\n", t->label->id);
 
 	switch(t->quad_type) {
+		case NOP:
+			fprintf(file, "\tnop\n\n");
+			break;
+
 		case AFFEC:
 			fprintf(file, "\tlw $a0, %s\n\tsw $a0, %s\n\n", t->operande1->id, t->res->id);
 			break;
@@ -356,5 +360,8 @@ void mips_write(quad *t, FILE *file) {
 
 		case TAB_RIGHT:
 			break;
+
+		default:
+			fprintf(stderr, "Quad %d not currently supported\n", t->quad_type);
 		}
 }
