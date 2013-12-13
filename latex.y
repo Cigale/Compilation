@@ -23,8 +23,8 @@ int yyerror(char *s);
 	} algo;
 	struct {
 		quad *code;
-		quad *truelist;
-		quad *falselist;
+		quad *truejump;
+		quad *falsejump;
 	} code_fragment;
 	struct scope *scope;
 	struct symbol *symbol;
@@ -83,6 +83,20 @@ Algo:
 	Const Input Output Global Local Blankline Code {
 		$$.code = $7.code;
 		$$.sc = cur_scope;
+
+		/* Damn people ending their code with a loop / if */
+		if ($7.truejump != NULL || $7.falsejump != NULL) {
+			struct symbol *sym;
+			$$.code = quad_put($$.code, NULL, NULL, NULL, NOP);
+
+			sym = quad_get_label(quad_last($7.code));
+
+			if ($7.truejump != NULL)
+				$7.truejump->res = sym;
+
+			if ($7.falsejump != NULL)
+				$7.falsejump->res = sym;
+		}
 	}
 	;
 
@@ -167,6 +181,22 @@ TableValue:
 Code:
 	Code Instruction {
 		$$.code = quad_concat($1.code, $2.code);
+		/* If a jump is still in-flight, make it land ASAP!
+		 * It's probably an end of If or end of loop that needs the
+		 * next statement to land on.
+		 */
+		if ($1.truejump != NULL || $1.falsejump != NULL) {
+			struct symbol *sym = quad_get_label(quad_last($2.code));
+
+			if ($1.truejump != NULL)
+				$1.truejump->res = sym;
+
+			if ($1.falsejump != NULL)
+				$1.falsejump->res = sym;
+		}
+
+		$$.truejump = $2.truejump;
+		$$.falsejump = $2.falsejump;
 	}
 	| {
 		$$.code = NULL;
@@ -237,8 +267,13 @@ Repeat:
 
 If:
 	TK_IF '{' '$' Expression '$' '}' '{' Code '}' {
-		/* TODO */
-		$$ = $8;
+		if ($4.truejump != NULL) {
+			struct symbol *sym = quad_get_label($8.code);
+			$4.truejump->res = sym;
+		}
+		$$.code = quad_concat($4.code, $8.code);
+		$$.truejump = NULL;
+		$$.falsejump = $4.falsejump;
 	}
 	;
 
@@ -269,14 +304,46 @@ Mbox:
 
 Expression:
 	ExpressionOr {
-		/* TODO */
 		$$ = $1;
 	}
 	;
 
 ExpressionOr:
 	ExpressionOr TK_OR ExpressionAnd {
-		/* TODO */
+		struct symbol *sym;
+		$$.code = quad_concat($1.code, $3.code);
+
+		if ($1.falsejump != NULL) {
+			/* Left expression can be false? Go check the right part! */
+			sym = quad_get_label(quad_last($3.code));
+			$1.falsejump->res = sym;
+		}
+
+		/*
+		 * Left expression can be true? Go to the same point as if the
+		 * right expression is true so that we always only have one
+		 * JUMP to fix.
+		 */
+		if ($1.truejump != NULL && $3.truejump != NULL) {
+			$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+			$$.truejump = quad_last($$.code);
+
+			sym = quad_get_label(quad_last($$.code));
+			$1.truejump->res = sym;
+			$3.truejump->res = sym;
+
+		} else if ($1.truejump != NULL) {
+			$$.truejump = $1.truejump;
+
+		} else if ($3.truejump != NULL) {
+			$$.truejump = $3.truejump;
+		}
+
+		/*
+		 * A lazy-evaluated OR may be false only if the right hand side
+		 * is false.
+		 */
+		$$.falsejump = $3.falsejump;
 	}
 	| ExpressionAnd {
 		$$ = $1;
@@ -285,7 +352,40 @@ ExpressionOr:
 
 ExpressionAnd:
 	ExpressionAnd TK_AND ExpressionRel {
-		/* TODO */
+		struct symbol *sym;
+		$$.code = quad_concat($1.code, $3.code);
+
+		if ($1.truejump != NULL) {
+			/* Left expression is true? Go check the right part! */
+			sym = quad_get_label(quad_last($3.code));
+			$1.truejump->res = sym;
+		}
+
+		/*
+		 * Left expression is false? Go to the same point as if the
+		 * right expression is false so that we always only have one
+		 * JUMP to fix.
+		 */
+		if ($1.falsejump != NULL && $3.truejump != NULL) {
+			$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+			$$.falsejump = quad_last($$.code);
+
+			sym = quad_get_label(quad_last($$.code));
+			$1.falsejump->res = sym;
+			$3.falsejump->res = sym;
+
+		} else if ($1.falsejump != NULL) {
+			$$.falsejump = $1.falsejump;
+
+		} else if ($3.falsejump != NULL) {
+			$$.falsejump = $3.falsejump;
+		}
+
+		/*
+		 * A lazy-evaluated AND may be true only if the right hand side
+		 * is true.
+		 */
+		$$.truejump = $3.truejump;
 	}
 	| ExpressionRel {
 		$$ = $1;
@@ -294,22 +394,82 @@ ExpressionAnd:
 
 ExpressionRel:
 	ExpressionAdd TK_BOOLINF ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_LT);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd TK_BOOLINFEQ ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_LTEQ);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd TK_BOOLSUP ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_GT);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd TK_BOOLSUPEQ ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_GTEQ);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd TK_BOOLEQ ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_EQ);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd TK_BOOLNEQ ExpressionAdd {
-		/* TODO */
+		struct quad *ql1 = quad_last($1.code);
+		struct quad *ql2 = quad_last($3.code);
+		if (!same_type(ql1->res->type, ql2->res->type)) {
+			fprintf(stderr, "Can't compare two different types\n");
+			exit(EXIT_FAILURE);
+		}
+		$$.code = quad_concat($1.code, $3.code);
+		$$.code = quad_put($$.code, ql1->res, ql2->res, NULL, BRANCHMENT_COND_NEQ);
+		$$.truejump = quad_last($$.code);
+		$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+		$$.falsejump = quad_last($$.code);
 	}
 	| ExpressionAdd {
 		$$ = $1;
@@ -399,9 +559,21 @@ ExpressionUnary:
 		$$.code = quad_put(NULL, sym, NULL, sym, AFFEC);
 	}
 	| ExpressionPrimary {
-		struct type t = quad_res_type(&$1->type, NULL, AFFEC);
-		struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
-		$$.code = quad_put(NULL, $1, NULL, sym, AFFEC);
+		if ($1->type.is_scalar && $1->type.stype == STYPE_BOOL) {
+			/* With bools, we branch */
+			struct symbol *symtrue = symbol_create(NULL, $1->type, TRUE, TRUE);
+			$$.code = quad_put(NULL, $1, symtrue, NULL, BRANCHMENT_COND_EQ);
+			$$.truejump = quad_last($$.code);
+			$$.code = quad_put($$.code, NULL, NULL, NULL, BRANCHMENT_UNCOND);
+			$$.falsejump = quad_last($$.code);
+		} else {
+			/* With other values, we just assign a symbol */
+			struct type t = quad_res_type(&$1->type, NULL, AFFEC);
+			struct symbol *sym = symbol_create(NULL, t, FALSE, 0);
+			$$.code = quad_put(NULL, $1, NULL, sym, AFFEC);
+			$$.truejump = NULL;
+			$$.falsejump = NULL;
+		}
 	}
 	;
 
@@ -432,7 +604,7 @@ ExpressionPrimary:
 		t.is_scalar = TRUE;
 		t.stype = STYPE_BOOL;
 		t.size = 0;
-		$$ = symbol_create(NULL, t, TRUE, TRUE);
+		$$ = symbol_create(NULL, t, TRUE, FALSE);
 	}
 	;
 
