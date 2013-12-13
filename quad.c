@@ -218,6 +218,9 @@ void mips_write(quad *t, FILE *file) {
 
 	int proc_param_nb = 0;
 
+	if (t->label != NULL)
+		fprintf(file, "%s:\n", t->label->id);
+
 	switch(t->quad_type) {
 		case AFFEC:
 			fprintf(file, "\tlw $a0, %s\n\tsw $a0, %s\n\n", t->operande1->id, t->res->id);
