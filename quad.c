@@ -276,50 +276,43 @@ void mips_write(quad *t, FILE *file) {
 			break;
 
 		case BRANCHMENT_UNCOND:
-			fprintf(file, "\tlw $a0 %s\n", t->res->id);
-			fprintf(file, "\tj $a0\n\n");
+			fprintf(file, "\tj %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_EQ:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tbeq $a0, $a1, $a2\n\n");
+			fprintf(file, "\tbeq $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_NEQ:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tbne $a0, $a1, $a2\n\n");
+			fprintf(file, "\tbne $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_LT:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tblt $a0, $a1, $a2\n\n");
+			fprintf(file, "\tblt $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_LTEQ:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tble $a0, $a1, $a2\n\n");
+			fprintf(file, "\tble $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_GT:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tbgt $a0, $a1, $a2\n\n");
+			fprintf(file, "\tbgt $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case BRANCHMENT_COND_GTEQ:
 			fprintf(file, "\tlw $a0 %s\n", t->operande1->id);
 			fprintf(file, "\tlw $a1 %s\n", t->operande2->id);
-			fprintf(file, "\tlw $a2 %s\n", t->res->id);
-			fprintf(file, "\tbge $a0, $a1, $a2\n\n");
+			fprintf(file, "\tbge $a0, $a1, %s\n\n", t->res->id);
 			break;
 
 		case PROC_PARAM:
