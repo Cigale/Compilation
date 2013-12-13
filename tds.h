@@ -5,7 +5,8 @@ enum scalar {
 	STYPE_BOOL,
 	STYPE_INT,
 	STYPE_CPLX,
-	STYPE_REAL
+	STYPE_REAL,
+	STYPE_ADDR
 };
 
 struct type {

@@ -3,8 +3,9 @@
 #include <string.h>
 #include "tds.h"
 #include "quad.h"
+#include "constants.h"
 
-int next_quad = 0;
+int next_label_id = 0;
 
 struct type quad_res_type(const struct type *type1, const struct type *type2, enum quad_type type) {
 	switch (type) {
@@ -45,12 +46,11 @@ quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 	quad *element = malloc(sizeof(quad));
 	if(!element) exit(-1);
 
-	element->label = (char*) malloc(sizeof(char) * 10);
-	sprintf(element->label, "%d", next_quad);
 	element->operande1 = op1;
 	element->operande2 = op2;
 	element->res = res;
 	element->quad_type = type;
+	element->label = NULL;
 
 	if(!t) {
 		t = element;
@@ -60,7 +60,6 @@ quad* quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 		element->next = NULL;
 	}
 	t->last = element;
-	next_quad++;
 
 	return t;
 }
@@ -93,6 +92,34 @@ quad* quad_concat(quad* q1, quad* q2) {
 
 quad *quad_last(quad *q) {
 	return q->last;
+}
+
+struct symbol *quad_get_label(quad *q) {
+	char *labelname;
+	struct symbol *sym;
+	struct type t;
+
+	if (q->label != NULL)
+		return q->label;
+
+	labelname = malloc(16 * sizeof(char));
+	if (!labelname) {
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(labelname, 14 * sizeof(char), "label_%d", next_label_id);
+	next_label_id++;
+
+	t.is_scalar = TRUE;
+	t.stype = STYPE_ADDR;
+	t.size = 0;
+
+	sym = symbol_create(labelname, t, FALSE, 0);
+
+	q->label = sym;
+
+	return q->label;
 }
 
 quad* quad_take(quad **p) {

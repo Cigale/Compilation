@@ -27,7 +27,7 @@ enum quad_type {
 };
 
 typedef struct quad {
-	char *label;
+	struct symbol *label;
 	struct symbol *operande1;
 	struct symbol *operande2;
 	struct symbol *res;
@@ -41,6 +41,7 @@ quad *quad_put(quad *t, struct symbol *op1, struct symbol *op2, struct symbol *r
 quad *quad_add(quad *t, quad *q);
 quad *quad_concat(quad *q1, quad *q2);
 quad *quad_last(quad *q);
+struct symbol *quad_get_label(quad *q);
 quad *quad_take(quad **p);
 void quad_clear(quad **t);
 void quad_print(quad *t);
