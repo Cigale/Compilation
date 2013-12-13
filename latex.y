@@ -63,7 +63,7 @@ AllAlgos:
 		printf("\nImpression des différents quads générés :\n");
 		quad_print($1);
 		printf("\nGénération de code...");
-		mips_gen(&$1, get_all_symbols());
+		mips_gen($1, get_all_symbols());
 		printf("Done.\n");
 	}
 	;

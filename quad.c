@@ -122,17 +122,6 @@ struct symbol *quad_get_label(quad *q) {
 	return q->label;
 }
 
-quad* quad_take(quad **p) {
-	quad *res;
-	quad *tmp;
-	if(!*p) return NULL;     /* Retourne -1 si la pile est vide. */
-	res = *p;
-	tmp = (*p)->next;
-	free(*p);
-	*p = tmp;
-	return res;
-}
-
 void quad_clear(quad **t) {
 	quad *tmp;
 	while(*t) {
@@ -174,7 +163,7 @@ void quad_complete(quad *t, long value) {
 	t->res->value = value;
 }
 
-void mips_gen(quad **q, struct symbol* s) {
+void mips_gen(quad *q, struct symbol* s) {
 	FILE* file = NULL;
 
 	file = fopen("res.s", "w");
@@ -186,11 +175,13 @@ void mips_gen(quad **q, struct symbol* s) {
 
 	mips_vars(s, file);
 	fprintf(file, "\n\t.text\nmain:\n");
-	quad* current = quad_take(q);
 
-	while(current) {
-		mips_write(current, file);
-		current = quad_take(q);
+	while(q) {
+		quad *tmp;
+		mips_write(q, file);
+		tmp = q;
+		q = q->next;
+		free(tmp);
 	}
 	fprintf(file, "\n\tli $v0, 10\n\tsyscall\n\n");
 	fclose(file);

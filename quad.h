@@ -42,11 +42,10 @@ quad *quad_add(quad *t, quad *q);
 quad *quad_concat(quad *q1, quad *q2);
 quad *quad_last(quad *q);
 struct symbol *quad_get_label(quad *q);
-quad *quad_take(quad **p);
 void quad_clear(quad **t);
 void quad_print(quad *t);
 void quad_complete(quad *t, long value);
-void mips_gen(quad **q, struct symbol *t);
+void mips_gen(quad *q, struct symbol *t);
 void mips_vars(struct symbol* s, FILE* f);
 void mips_write(quad* t, FILE *file);
 
