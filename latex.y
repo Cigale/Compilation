@@ -53,7 +53,6 @@ int yyerror(char *s);
 %type <scope> Declarations Declarations_List
 %type <symbol> Parameter ExpressionPrimary
 %type <type> Type
-/*%type <data> Expression*/
 
 %start AllAlgos
 

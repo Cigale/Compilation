@@ -14,7 +14,7 @@ struct type quad_res_type(const struct type *type1, const struct type *type2, en
 		case AFFEC_UNARY_NOT:
 			return *type1;
 
-		/* Biary operators */
+		/* Binary operators */
 		case AFFEC_BINARY_PLUS:
 		case AFFEC_BINARY_MINUS:
 		case AFFEC_BINARY_MULT:
