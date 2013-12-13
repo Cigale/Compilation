@@ -34,7 +34,12 @@ cmdEif          "\\eIf"
 cmdTo           "\\KwTo"
 cmdMbox         "\\mbox"
 endInst         "\\;"
-booleanOp       "\\geq"|"\\leq"|"\\neq"
+booleanInf      "<"
+booleanInfEq    "\\leq"
+booleanSup      ">"
+booleanSupEq    "\\geq"
+booleanEq       "="
+booleanNeq      "\\neq"
 booleanNOT      "\\neg"
 booleanOR       "\\vee"
 booleanAND      "\\wedge"
@@ -78,7 +83,12 @@ divOp           "\\div"
 	{identifier}        yylval.id = strdup(yytext); return TK_IDENT;
 	{number}            yylval.intval = atoi(yytext); return TK_NUMBER;
 	{endInst}           return TK_ENDINST;
-	{booleanOp}         return TK_BOOLOP;
+	{booleanInf}        return TK_BOOLINF;
+	{booleanInfEq}      return TK_BOOLINFEQ;
+	{booleanSup}        return TK_BOOLSUP;
+	{booleanSupEq}      return TK_BOOLSUPEQ;
+	{booleanEq}         return TK_BOOLEQ;
+	{booleanNeq}        return TK_BOOLNEQ;
 	{booleanNOT}        return TK_NOT;
 	{booleanOR}         return TK_OR;
 	{booleanAND}        return TK_AND;

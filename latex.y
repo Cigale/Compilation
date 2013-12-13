@@ -39,7 +39,7 @@ int yyerror(char *s);
 %token TK_BLK TK_ENDINST TK_LEFT TK_FOR TK_WHILE TK_IF TK_EIF TK_REPEAT
 %token TK_EMPTY TK_IN TK_TO TK_MBOX
 %token TK_BOOLVAL TK_TIMES TK_DIV TK_FALSE TK_TRUE TK_NOT TK_AND TK_OR
-%token TK_BOOLOP
+%token TK_BOOLINF TK_BOOLINFEQ TK_BOOLSUP TK_BOOLSUPEQ TK_BOOLEQ TK_BOOLNEQ
 %token <scalar> TK_TYPE
 %token <intval> TK_NUMBER
 %token <id> TK_IDENT
@@ -293,7 +293,22 @@ ExpressionAnd:
 	;
 
 ExpressionRel:
-	ExpressionAdd TK_BOOLOP ExpressionAdd {
+	ExpressionAdd TK_BOOLINF ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd TK_BOOLINFEQ ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd TK_BOOLSUP ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd TK_BOOLSUPEQ ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd TK_BOOLEQ ExpressionAdd {
+		/* TODO */
+	}
+	| ExpressionAdd TK_BOOLNEQ ExpressionAdd {
 		/* TODO */
 	}
 	| ExpressionAdd {
