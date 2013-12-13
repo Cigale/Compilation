@@ -1,9 +1,9 @@
 List of things to do
 
 
-- Add MIPS generation for simple assignment
-- Generate the quads for the conditions expressions
-- Generate quads for conditions statements (including loops)
+- Generate quads for loops (should not be too difficult)
 - Generate quads for Vector subscripting
 - Generate quads for function calls
 - Free the scopes when non of their symbols are used
+- Free the unused memory
+- Write a pass a torture test
